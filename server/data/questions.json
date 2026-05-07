@@ -1867,5 +1867,101 @@
     "correctAnswer": "Sobrantes de producción",
     "ocrText": "Una restricción puede representar, (Marque la incorrecta)\nSeleccione una:\na. Capacidad de producción\nb. Limitaciones de recurso\nc. Sobrantes de producción\nd. Requerimiento de mezcla\nLa respuesta correcta es: Sobrantes de producción",
     "id": "1778163080605-6f2429960492d8"
+  },
+  {
+    "type": "multiple_choice",
+    "statement": "La proporcionalidad, como propiedad de la Programación lineal, requiere que la contribución de cada variable de",
+    "options": [
+      "sea inversamente proporcional al valor de la variable",
+      "sea directamente no proporcional al valor de la variable",
+      "sea indirectamente proporcional al valor de la variable",
+      "sea directamente proporcional al valor de la variable"
+    ],
+    "correctAnswer": "sea directamente proporcional al valor de la variable",
+    "ocrText": "La proporcionalidad, como propiedad de la Programación lineal, requiere que la contribución de cada variable de\ndecisión en la función objetivo, y sus requerimientos en las restricciones,\nSeleccione una:\na. sea inversamente proporcional al valor de la variable\nb.\nsea directamente no proporcional al valor de la variable\nc.\nsea indirectamente proporcional al valor de la variable\nd.\nsea directamente proporcional al valor de la variable\nLa respuesta correcta es: sea directamente proporcional al valor de la variable",
+    "id": "1778184653235-e8f0293bfce128"
+  },
+  {
+    "type": "multiple_choice",
+    "statement": "Utilizando el Método Simplex, ¿Cómo se puede detectar que un problema de Programación Lineal es no acotado?",
+    "options": [
+      "Esta situación se detecta cuando al realizar el cálculo de la variable que deja la base, todos los elementos\nYkj de la columna j en la tabla son negativos, para j el índice de una variable no básica con costo positivo.",
+      "Esta situación se detecta cuando al realizar el cálculo de la variable que deja la base, todos los elementos\nYkj de la columna j en la tabla son no negativos, para j el índice de una variable no básica con costo\npositivo.",
+      "Esta situación se detecta cuando al realizar el cálculo de la variable que deja la base, todos los\nelementos Ykj de la columna j en la tabla son negativos, para j el índice de una variable no básica con\ncosto reducido negativo.",
+      "Esta situación se detecta cuando al realizar el cálculo de la variable que esta en la base, todos los elementos\nYkj de la columna j en la tabla son no negativos, para j el índice de una variable no básica con costo\nnegativo."
+    ],
+    "correctAnswer": "Esta situación se detecta cuando al realizar el cálculo de la variable que deja la base, todos los\nelementos Ykj de la columna j en la tabla son negativos, para j el índice de una variable no básica con\ncosto reducido negativo.",
+    "ocrText": "Utilizando el Método Simplex, ¿Cómo se puede detectar que un problema de Programación Lineal es no acotado?\nSeleccione una:\na.\nEsta situación se detecta cuando al realizar el cálculo de la variable que deja la base, todos los elementos\nYkj de la columna j en la tabla son negativos, para j el índice de una variable no básica con costo positivo.\nb.\nEsta situación se detecta cuando al realizar el cálculo de la variable que deja la base, todos los elementos\nYkj de la columna j en la tabla son no negativos, para j el índice de una variable no básica con costo\npositivo.\nC.\nEsta situación se detecta cuando al realizar el cálculo de la variable que deja la base, todos los\nelementos Ykj de la columna j en la tabla son negativos, para j el índice de una variable no básica con\ncosto reducido negativo.\nd.\nEsta situación se detecta cuando al realizar el cálculo de la variable que esta en la base, todos los elementos\nYkj de la columna j en la tabla son no negativos, para j el índice de una variable no básica con costo\nnegativo.\nLa respuesta correcta es: Esta situación se detecta cuando al realizar el cálculo de la variable que deja la base, todos\nlos elementos Ykj de la columna j en la tabla son negativos, para j el índice de una variable no básica con costo\nreducido negativo.",
+    "id": "1778184701779-b8f954e15b8dd8"
+  },
+  {
+    "type": "multiple_choice",
+    "statement": "Proponer en forma cuantitativa acciones O decisiones a tomar para optimizar sistemas donde existan recursos\nescasos y se presenten relaciones lineales, mediante la teoría y práctica de la Técnica de Programación Lineal",
+    "options": [
+      "Verdadero",
+      "Falso"
+    ],
+    "correctAnswer": "Verdadero",
+    "ocrText": "Proponer en forma cuantitativa acciones O decisiones a tomar para optimizar sistemas donde existan recursos\nescasos y se presenten relaciones lineales, mediante la teoría y práctica de la Técnica de Programación Lineal\nSeleccione una:\nVerdadero\n>\nFalso",
+    "id": "1778184743142-dc9375193441d"
+  },
+  {
+    "type": "multiple_choice",
+    "statement": "El Valor marginal:",
+    "options": [
+      "es el coeficiente del cambio en el valor óptimo causado por cualquier aumento o disminución admisible en\nel rango admisible del productos, se presenta cuando no existe un cantidad de producto",
+      "está asociado a las variables reales y me indica la cantidad perdida a causa de no haber adoptado una\ndeterminada acción al adoptar una que no es la más conveniente",
+      "es el coeficiente del cambio en el valor óptimo causado por cualquier aumento o disminución\nadmisible en el rango admisible del recurso, se presenta cuando no existe un sobrante de recursos",
+      "está asociado a las variables slack y me indica la cantidad perdida a causa de no haber adoptado una\ndeterminada acción al adoptar una que no es la más conveniente"
+    ],
+    "correctAnswer": "es el coeficiente del cambio en el valor óptimo causado por cualquier aumento o disminución\nadmisible en el rango admisible del recurso, se presenta cuando no existe un sobrante de recursos",
+    "ocrText": "El Valor marginal:\nSeleccione una:\na.\nes el coeficiente del cambio en el valor óptimo causado por cualquier aumento o disminución admisible en\nel rango admisible del productos, se presenta cuando no existe un cantidad de producto\nb.\nestá asociado a las variables reales y me indica la cantidad perdida a causa de no haber adoptado una\ndeterminada acción al adoptar una que no es la más conveniente\nc.\nes el coeficiente del cambio en el valor óptimo causado por cualquier aumento o disminución\nadmisible en el rango admisible del recurso, se presenta cuando no existe un sobrante de recursos\nd.\nestá asociado a las variables slack y me indica la cantidad perdida a causa de no haber adoptado una\ndeterminada acción al adoptar una que no es la más conveniente\nLa respuesta correcta es: es el coeficiente del cambio en el valor óptimo causado por cualquier aumento 0\ndisminución admisible en el rango admisible del recurso, se presenta cuando no existe un sobrante de recursos",
+    "id": "1778184785121-83e225cf106c68"
+  },
+  {
+    "type": "drag_and_drop",
+    "statement": "Resolver",
+    "textParts": [
+      "Si las ",
+      "__blank__",
+      " no se pueden satisfacer en forma simultanea, se dice que el modelo ",
+      "__blank__",
+      " . En el metodo simplex en la tabla optimo, se tiene, cuando menos una variable ",
+      "__blank__",
+      " sera positiva en la iteracion optima"
+    ],
+    "draggableOptions": [
+      "real",
+      "restricciones",
+      "slack",
+      "tiene solucion factible",
+      "no tiene solucion factible",
+      "variables",
+      "degeneracion",
+      "variable basica",
+      "soluciones no acotadas",
+      "variable no basica",
+      "artificial"
+    ],
+    "correctAnswers": [
+      "restricciones",
+      "no tiene solucion factible",
+      "artificial"
+    ],
+    "ocrText": "Tanto en la\nfunción objetivo\n>\ncomo en las\nrestricciones\n>\n, el aporte O consumo de\ncada variable es independiente de los valores del resto de las variables, siendo la contribución/uso total de todas las\nactividades igual a la suma de cada actividad individual ( se debe al supuesto de\nAditividad\n)\nrecursos\ncoeficientes tecnológicos\nvariables\nno negatividad\ndivisibilidad\nproporcionalidad\ncertidumbre",
+    "id": "1778184978657-06fb3eb31483f8"
+  },
+  {
+    "type": "multiple_choice",
+    "statement": "Un modelo de PL con Z Min y Ri ≤ bi:",
+    "options": [
+      "Tiene solución trivial Xi reales = cero",
+      "Tiene solución en un vértice del convexo Xi > 0.",
+      "Tiene solución, pero crece hasta el infinito.",
+      "Tiene solución en un vértice del convexo."
+    ],
+    "correctAnswer": "Tiene solución trivial Xi reales = cero",
+    "ocrText": "Un modelo de PL con Z Min y Ri ≤ bi:\nSeleccione una:\na.\nTiene solución trivial Xi reales = cero\nb. Tiene solución en un vértice del convexo Xi > 0.\nx\nC. Tiene solución, pero crece hasta el infinito.\nd. Tiene solución en un vértice del convexo.\nLa respuesta correcta es: Tiene solución trivial Xi reales = cero",
+    "id": "1778185006763-506af5aae758b"
   }
 ]
