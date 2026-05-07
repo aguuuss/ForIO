@@ -1335,17 +1335,6 @@
   },
   {
     "type": "multiple_choice",
-    "statement": "El problema de cargo fijo tiene que ver con situaciones en que la actividad económica",
-    "options": [
-      "verdadero",
-      "falso"
-    ],
-    "correctAnswer": "verdadero",
-    "ocrText": "El problema de cargo fijo tiene que ver con situaciones en que la actividad económica\nincurre en dos tipos de costos: un costo fijo necesario para iniciar la actividad y un\ncosto variable proporcional al nivel de la actividad",
-    "id": "1778040461268-94e4f5db2b0d08"
-  },
-  {
-    "type": "multiple_choice",
     "statement": "El método de Ramificar y Acotar, en un caso de Z—> Max, cuando aparece un Z superior a la cota inferior",
     "options": [
       "Se lo intercambia y se lo elige como cota superior",
@@ -1531,13 +1520,12 @@
   },
   {
     "type": "multiple_choice",
-    "statement": "La toma de decisiones de emprender 0 no un proyecto suele hacerse conforme a consideraciones y prioridades preestablecidas de presupuesto limitado. Una",
+    "statement": "La toma de decisiones de emprender 0 no un proyecto suele hacerse conforme a consideraciones y prioridades preestablecidas de presupuesto limitado. Una herramienta para resolver esta situacion es programacion lineal entera",
     "options": [
       "Verdadero",
       "Falso"
     ],
     "correctAnswer": "Verdadero",
-    "ocrText": "La toma de decisiones de emprender 0 no un proyecto suele hacerse conforme a consideraciones y prioridades preestablecidas de presupuesto limitado. Una\nherramienta para resolver esta situación es programación lineal entera\nSeleccione una:\nVerdadero\nFalso\nLa respuesta correcta es 'Verdadero'",
     "id": "1778074171829-151421d9fd013"
   },
   {
@@ -1576,5 +1564,191 @@
     "correctAnswer": "Falso",
     "ocrText": "Los modelos en los que las restricciones se satisfacen al mismo tiempo (Uno - u\notro) 0 son dependientes (Si - entonces), utilizan variables binarias auxiliares. La transformación utiliza un artificio matemático para presentar la\nrestricción especial como restricciones \"and\" (\"y\").\nSeleccione una:\n<\n>\nVerdadero\nFalso\nLa respuesta correcta es 'Falso'",
     "id": "1778074419801-0a46f862a321d8"
+  },
+  {
+    "type": "table_drag_and_drop",
+    "statement": "Resolver",
+    "table": {
+      "rows": 4,
+      "columns": 5,
+      "cells": [
+        {
+          "row": 0,
+          "col": 0,
+          "content": "",
+          "isBlank": false,
+          "correctAnswer": ""
+        },
+        {
+          "row": 0,
+          "col": 1,
+          "content": "",
+          "isBlank": false,
+          "correctAnswer": ""
+        },
+        {
+          "row": 0,
+          "col": 2,
+          "content": "",
+          "isBlank": true,
+          "correctAnswer": "CJ"
+        },
+        {
+          "row": 0,
+          "col": 3,
+          "content": "",
+          "isBlank": false,
+          "correctAnswer": ""
+        },
+        {
+          "row": 0,
+          "col": 4,
+          "content": "",
+          "isBlank": false,
+          "correctAnswer": ""
+        },
+        {
+          "row": 1,
+          "col": 0,
+          "content": "",
+          "isBlank": true,
+          "correctAnswer": "Vector Base"
+        },
+        {
+          "row": 1,
+          "col": 1,
+          "content": "",
+          "isBlank": true,
+          "correctAnswer": "Coeficientes de Var.Base"
+        },
+        {
+          "row": 1,
+          "col": 2,
+          "content": "",
+          "isBlank": true,
+          "correctAnswer": "Valores de Var.Base"
+        },
+        {
+          "row": 1,
+          "col": 3,
+          "content": "",
+          "isBlank": true,
+          "correctAnswer": "Variables Reales"
+        },
+        {
+          "row": 1,
+          "col": 4,
+          "content": "",
+          "isBlank": true,
+          "correctAnswer": "Variables slack"
+        },
+        {
+          "row": 2,
+          "col": 0,
+          "content": "",
+          "isBlank": false,
+          "correctAnswer": ""
+        },
+        {
+          "row": 2,
+          "col": 1,
+          "content": "",
+          "isBlank": false,
+          "correctAnswer": ""
+        },
+        {
+          "row": 2,
+          "col": 2,
+          "content": "",
+          "isBlank": false,
+          "correctAnswer": ""
+        },
+        {
+          "row": 2,
+          "col": 3,
+          "content": "",
+          "isBlank": false,
+          "correctAnswer": ""
+        },
+        {
+          "row": 2,
+          "col": 4,
+          "content": "",
+          "isBlank": false,
+          "correctAnswer": ""
+        },
+        {
+          "row": 3,
+          "col": 0,
+          "content": "",
+          "isBlank": false,
+          "correctAnswer": ""
+        },
+        {
+          "row": 3,
+          "col": 1,
+          "content": "",
+          "isBlank": false,
+          "correctAnswer": ""
+        },
+        {
+          "row": 3,
+          "col": 2,
+          "content": "",
+          "isBlank": true,
+          "correctAnswer": "Z"
+        },
+        {
+          "row": 3,
+          "col": 3,
+          "content": "",
+          "isBlank": true,
+          "correctAnswer": "Condicion de optimilidad"
+        },
+        {
+          "row": 3,
+          "col": 4,
+          "content": "",
+          "isBlank": true,
+          "correctAnswer": "ceros"
+        }
+      ]
+    },
+    "draggableOptions": [
+      "CJ",
+      "Vector Base",
+      "Coeficientes de Var.Base",
+      "Valores de Var.Base",
+      "Variables Reales",
+      "Variables slack",
+      "Z",
+      "Condicion de optimilidad",
+      "ceros"
+    ],
+    "id": "1778078749189-c648b867f515"
+  },
+  {
+    "type": "multiple_choice",
+    "statement": "Los pilares de la programación lineal son:\nXi >= 0  Cb X AJ - cj >= 0    Z = F(x) -->optimizar (lineal y única)  1 ó más Ri >= bi, 1 ó más Ri<= bi   Z = F(x) -->Maximizar (lineal y única)\nA-1 X B >= X",
+    "options": [
+      "Todas son correctas",
+      "ninguna es correcta",
+      "1,3,5",
+      "2,4,6",
+      "1,3,4"
+    ],
+    "correctAnswer": "1,3,4",
+    "id": "1778162456247-af051ff0758b58"
+  },
+  {
+    "type": "multiple_choice",
+    "statement": "George Dantzig nació en 1.914 y trabajó para la Rand Corporation después de su aporte a la fuerza aérea. Fue profesor  de Investigación de Operaciones en la Universidad de Standford",
+    "options": [
+      "Verdadero",
+      "Falso"
+    ],
+    "correctAnswer": "Verdadero",
+    "ocrText": "George Dantzig nació en 1.914 y trabajó para la Rand Corporation después de su aporte a la fuerza aérea. Fue profesor\nde Investigación de Operaciones en la Universidad de Standford\nSeleccione una:\nVerdadero\nFalso\nLa respuesta correcta es 'Verdadero'",
+    "id": "1778162651294-776f3a000214b"
   }
 ]

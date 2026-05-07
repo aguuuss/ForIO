@@ -639,19 +639,6 @@
     "id": "1777998766802-69a0130b0db83"
   },
   {
-    "type": "multiple_choice",
-    "statement": "El método simplex en general para maximización, se utiliza como criterio seleccionar como variable entrante",
-    "options": [
-      "a la base aquella variable no básica con costo más negativo, de modo de que en menos iteraciones podamos alcanzar el óptimo en caso que éste exista",
-      "a la base aquella variable no básica con costo más negativo, de modo de que en mayores iteraciones podamos alcanzar el óptimo en caso que éste exista",
-      "a la base aquella variable básica con costo más negativo, de modo de que en menos iteraciones podamos alcanzar el óptimo en caso que éste exista",
-      "a la base aquella variable no básica con costo más positivo, de modo de que en menos iteraciones podamos alcanzar el optimo en caso que éste exista"
-    ],
-    "correctAnswer": "a la base aquella variable no básica con costo más negativo, de modo de que en menos iteraciones podamos alcanzar el óptimo en caso que éste exista",
-    "ocrText": "El método simplex en general para maximización, se utiliza como criterio seleccionar como variable entrante\nSeleccione una:\na.\na la base aquella variable no básica con costo más negativo, de modo de que en menos iteraciones podamos alcanzar el óptimo en caso que éste exista\nb.\na la base aquella variable no básica con costo más negativo, de modo de que en mayores iteraciones podamos alcanzar el óptimo en caso que éste exista\nC.\na la base aquella variable básica con costo más negativo, de modo de que en menos iteraciones podamos alcanzar el óptimo en caso que éste exista\nd.\na la base aquella variable no básica con costo más positivo, de modo de que en menos iteraciones podamos alcanzar el optimo en caso que éste exista\nLa respuesta correcta es: a la base aquella variable no básica con costo más negativo, de modo de que en menos iteraciones podamos alcanzar el óptimo en caso que éste exista",
-    "id": "1777999020693-1b5bf8afe7b8b8"
-  },
-  {
     "type": "drag_and_drop",
     "statement": "Resolver",
     "textParts": [
@@ -661,7 +648,6 @@
       "__blank__"
     ],
     "draggableOptions": [
-      "funcion objetivo",
       "variables",
       "certidumbre",
       "divisibilidad",
@@ -677,7 +663,6 @@
       "funcion objetivo",
       "certidumbre"
     ],
-    "ocrText": "coeficientes, tanto de la\nvariables\ncomo de las restricciones, son conocidos con exactitud y además no varian durante el período de tiempo en que se realiza el estudio (supuesto de\ncertidumbre\n)\ndivisibilidad\nrecursos\nAditividad\ncoeficientes tecnológicos\nno negatividad\nproporcionalidad\nfuncion objetivo",
     "id": "1777999173471-4f369a7b9a9148"
   },
   {
@@ -1028,12 +1013,11 @@
     "statement": "El Valor marginal:",
     "options": [
       "está asociado a las variables reales y me indica la cantidad perdida a causa de no haber adoptado una determinada acción al adoptar una que no es la más conveniente",
-      "es el coeficiente del cambio en el valor óptimo causado por cualquier aumento 0 disminucion admisible en el rango admisible del recurso, se presenta cuando no existe un sobrante de recursos",
+      "es el coeficiente del cambio en el valor óptimo causado por cualquier aumento o disminucion admisible en el rango admisible del recurso, se presenta cuando  existe un sobrante de recursos",
       "está asociado a las variables slack y me indica la cantidad perdida a causa de no haber adoptado una determinada acción al adoptar una que no es la más conveniente",
-      "es el coeficiente del cambio en el valor óptimo causado por cualquier aumento 0 disminución admisible en el rango admisible del recurso, se presenta cuando no existe un sobrante de recursos"
+      "es el coeficiente del cambio en el valor óptimo causado por cualquier aumento o disminución admisible en el rango admisible del recurso, se presenta cuando no existe un sobrante de recursos"
     ],
-    "correctAnswer": "es el coeficiente del cambio en el valor óptimo causado por cualquier aumento 0 disminucion admisible en el rango admisible del recurso, se presenta cuando no existe un sobrante de recursos",
-    "ocrText": "El Valor marginal:\nSeleccione una:\na. está asociado a las variables reales y me indica la cantidad perdida a causa de no haber adoptado una determinada acción al adoptar una que no es la más conveniente\nb. es el coeficiente del cambio en el valor óptimo causado por cualquier aumento 0 disminucion admisible en el rango admisible del productos, se presenta cuando no existe un cantidad de producto\nC.\nes el coeficiente del cambio en el valor óptimo causado por cualquier aumento 0 disminucion admisible en el rango admisible del recurso, se presenta cuando no existe un sobrante de recursos\nd.\nestá asociado a las variables slack y me indica la cantidad perdida a causa de no haber adoptado una determinada acción al adoptar una que no es la más conveniente\nLa respuesta correcta es: es el coeficiente del cambio en el valor óptimo causado por cualquier aumento 0 disminución admisible en el rango admisible del recurso, se presenta cuando no existe un sobrante de recursos",
+    "correctAnswer": "es el coeficiente del cambio en el valor óptimo causado por cualquier aumento o disminución admisible en el rango admisible del recurso, se presenta cuando no existe un sobrante de recursos",
     "id": "1777999892437-bdbfefb3f78988"
   },
   {
@@ -1177,14 +1161,12 @@
     "type": "multiple_choice",
     "statement": "La factibilidad de la solucion óptima actual se ve afectada solo si cambia:",
     "options": [
-      "Se varia los coeficientes tecnológicos 0 se agregue un nuevo producto.",
-      "Se varia el lado derecho de las restricciones, O se agrega una nueva restriccion al modelo.",
+      "Se varia los coeficientes tecnológicos o se agregue un nuevo producto.",
       "Se varian los coeficientes del funcional",
       "Se varia la disponibilidad de productos.",
       "Se varia el lado derecho de las restricciones, O se agrega una nueva restricción al modelo."
     ],
     "correctAnswer": "Se varia el lado derecho de las restricciones, O se agrega una nueva restricción al modelo.",
-    "ocrText": "La factibilidad de la solucion óptima actual se ve afectada solo si cambia:\nSeleccione una:\na. Se varia los coeficientes tecnológicos 0 se agregue un nuevo producto.\nb. Se varia el lado derecho de las restricciones, O se agrega una nueva restriccion al modelo.\nC.\nSe varian los coeficientes del funcional\nd. Se varia la disponibilidad de productos.\nLa respuesta correcta es: Se varia el lado derecho de las restricciones, O se agrega una nueva restricción al modelo.",
     "id": "1778002572370-3ef3d6da30edd"
   },
   {
@@ -1228,7 +1210,7 @@
   },
   {
     "type": "multiple_choice",
-    "statement": "El análisis de sensibilidad 0 postoptimal para los modelos de Programación Lineal, tiene por objetivo:",
+    "statement": "El análisis de sensibilidad o postoptimal para los modelos de Programación Lineal, tiene por objetivo:",
     "options": [
       "identificar el impacto que provoca en los resultados del problema original realizar determinadas variaciones en los parámetros, variables O restricciones del modelo, sin necesidad de resolver el problema nuevamente,es decir sin volver a realizar el gráfico",
       "identificar los resultados del problema original realizar determinadas variaciones en los parámetros, variables 0 restricciones del modelo conel método simplex.",
@@ -1236,7 +1218,6 @@
       "Ver los cambios del problema en el modelo, a través del método simplex."
     ],
     "correctAnswer": "identificar el impacto que provoca en los resultados del problema original realizar determinadas variaciones en los parámetros, variables O restricciones del modelo, sin necesidad de resolver el problema nuevamente,es decir sin volver a realizar el gráfico",
-    "ocrText": "El análisis de sensibilidad 0 postoptimal para los modelos de Programación Lineal, tiene por objetivo:\nSeleccione una:\na.\nidentificar el impacto que provoca en los resultados del problema original realizar determinadas variaciones en los parámetros, variables O restricciones del modelo, sin necesidad de resolver el problema nuevamente,es decir sin volver a realizar el gráfico o\nlas iteraciones del método simplex.\nb.\nidentificar los resultados del problema original realizar determinadas variaciones en los parámetros, variables 0 restricciones del modelo conel método simplex.\nC.\nresolver el problema nuevamente,es decir realizar el gráfico 0 las iteraciones del método simplex.\nd.\nVer los cambios del problema en el modelo, a través del método simplex.\nLa respuesta correcta es: identificar el impacto que provoca en los resultados del problema original realizar determinadas variaciones en los parámetros, variables O restricciones del modelo, sin necesidad de resolver el problema nuevamente,es decir sin volver a realizar el\ngráfico 0 las iteraciones del método simplex.",
     "id": "1778002572370-93df14c24245"
   },
   {
@@ -1257,13 +1238,11 @@
     "statement": "El costo de oportunidad aporta dos datos al tomador de decisiones (Z--> MAX):",
     "options": [
       "Cuanto debe disminuir el coeficiente del funcional de ese producto para que convenga producirlo y cuanto se ganaria por forzar su fabricacion, en caso de decir realizarlo cuando la tabla óptima informa que no es conveniente.",
-      "Cuanto debe aumentar el coeficiente del funcional de ese producto para que convenga producirlo y cuanto se perderia por forzar su fabricacion, en caso de decir realizarlo cuando la tabla óptima informa que no es conveniente",
       "Cuanto debe disminuir el coeficiente del funcional de ese producto para que convenga producirlo",
       "cuanto se perderia por forzar su fabricación, en caso de decir realizarlo cuando la tabla óptima informa que no es conveniente.",
       "Cuanto debe aumentar el coeficiente del funcional de ese producto para que convenga producirlo y cuanto se perderia por forzar su fabricación, en caso de decir realizarlo cuando la tabla óptima informa que no es conveniente"
     ],
     "correctAnswer": "Cuanto debe aumentar el coeficiente del funcional de ese producto para que convenga producirlo y cuanto se perderia por forzar su fabricación, en caso de decir realizarlo cuando la tabla óptima informa que no es conveniente",
-    "ocrText": "El costo de oportunidad aporta dos datos al tomador de decisiones (Z--> MAX):\nSeleccione una:\na.\nCuanto debe disminuir el coeficiente del funcional de ese producto para que convenga producirlo y cuanto se ganaria por forzar su fabricacion, en caso de decir realizarlo cuando la tabla óptima informa que no es conveniente.\nb.\nCuanto debe aumentar el coeficiente del funcional de ese producto para que convenga producirlo y cuanto se perderia por forzar su fabricacion, en caso de decir realizarlo cuando la tabla óptima informa que no es conveniente\nC.\nCuanto debe disminuir el coeficiente del funcional de ese producto para que convenga producirlo\nd.\ncuanto se perderia por forzar su fabricación, en caso de decir realizarlo cuando la tabla óptima informa que no es conveniente.\nLa respuesta correcta es: Cuanto debe aumentar el coeficiente del funcional de ese producto para que convenga producirlo y cuanto se perderia por forzar su fabricación, en caso de decir realizarlo cuando la tabla óptima informa que no es conveniente",
     "id": "1778002747461-ea2799c8fc26e"
   },
   {
@@ -1297,12 +1276,11 @@
     "statement": "Una variacion en los recursos de las restricciones origina:",
     "options": [
       "Oscilaciones en la pendiente de las restricciones que cambien el óptimo que implican un cambio en la región factible.",
-      "Desplaza la restricción paralela a si misma, pero si no está saturada, dentro de ciertos limites, el punto optimo sigue siendo el mismo.",
+      "Desplaza la restricción paralela a si misma, pero si no está saturada, fuera de ciertos limites, el punto optimo sigue siendo el mismo.",
       "Oscilaciones dentro de la pendiente del funcional, que dentro de ciertos limites no cambia el punto óptimo.",
       "Desplaza la restricción paralela a si misma, pero si no está saturada, dentro de ciertos limites, el punto óptimo sigue siendo el mismo."
     ],
     "correctAnswer": "Desplaza la restricción paralela a si misma, pero si no está saturada, dentro de ciertos limites, el punto óptimo sigue siendo el mismo.",
-    "ocrText": "Una variacion en los recursos de las restricciones origina:\nSeleccione una:\na. Oscilaciones en la pendiente de las restricciones que cambien el óptimo que implican un cambio en la región factible.\nb. Desplaza la restricción paralela a si misma, pero si no está saturada, dentro de ciertos limites, el punto optimo sigue siendo el mismo.\nC. Oscilaciones dentro de la pendiente del funcional, que dentro de ciertos limites no cambia el punto óptimo.\nLa respuesta correcta es: Desplaza la restricción paralela a si misma, pero si no está saturada, dentro de ciertos limites, el punto óptimo sigue siendo el mismo.",
     "id": "1778002747461-630606569e2c38"
   },
   {
@@ -1354,17 +1332,6 @@
     "correctAnswer": "verdadero",
     "ocrText": "En el problema de cargo fijo se utilizan variables enteras binarias auxliares para manejar la continuidad en la función de costo objetivo.\nSeleccione una:\n\n© Verdadero\n\nO Falso",
     "id": "1778040409292-46dbc8e39128c"
-  },
-  {
-    "type": "multiple_choice",
-    "statement": "El problema de cargo fijo tiene que ver con situaciones en que la actividad económica",
-    "options": [
-      "verdadero",
-      "falso"
-    ],
-    "correctAnswer": "verdadero",
-    "ocrText": "El problema de cargo fijo tiene que ver con situaciones en que la actividad económica\nincurre en dos tipos de costos: un costo fijo necesario para iniciar la actividad y un\ncosto variable proporcional al nivel de la actividad",
-    "id": "1778040461268-94e4f5db2b0d08"
   },
   {
     "type": "multiple_choice",
@@ -1553,13 +1520,12 @@
   },
   {
     "type": "multiple_choice",
-    "statement": "La toma de decisiones de emprender 0 no un proyecto suele hacerse conforme a consideraciones y prioridades preestablecidas de presupuesto limitado. Una",
+    "statement": "La toma de decisiones de emprender 0 no un proyecto suele hacerse conforme a consideraciones y prioridades preestablecidas de presupuesto limitado. Una herramienta para resolver esta situacion es programacion lineal entera",
     "options": [
       "Verdadero",
       "Falso"
     ],
     "correctAnswer": "Verdadero",
-    "ocrText": "La toma de decisiones de emprender 0 no un proyecto suele hacerse conforme a consideraciones y prioridades preestablecidas de presupuesto limitado. Una\nherramienta para resolver esta situación es programación lineal entera\nSeleccione una:\nVerdadero\nFalso\nLa respuesta correcta es 'Verdadero'",
     "id": "1778074171829-151421d9fd013"
   },
   {
@@ -1598,5 +1564,295 @@
     "correctAnswer": "Falso",
     "ocrText": "Los modelos en los que las restricciones se satisfacen al mismo tiempo (Uno - u\notro) 0 son dependientes (Si - entonces), utilizan variables binarias auxiliares. La transformación utiliza un artificio matemático para presentar la\nrestricción especial como restricciones \"and\" (\"y\").\nSeleccione una:\n<\n>\nVerdadero\nFalso\nLa respuesta correcta es 'Falso'",
     "id": "1778074419801-0a46f862a321d8"
+  },
+  {
+    "type": "table_drag_and_drop",
+    "statement": "Resolver",
+    "table": {
+      "rows": 4,
+      "columns": 5,
+      "cells": [
+        {
+          "row": 0,
+          "col": 0,
+          "content": "",
+          "isBlank": false,
+          "correctAnswer": ""
+        },
+        {
+          "row": 0,
+          "col": 1,
+          "content": "",
+          "isBlank": false,
+          "correctAnswer": ""
+        },
+        {
+          "row": 0,
+          "col": 2,
+          "content": "",
+          "isBlank": true,
+          "correctAnswer": "CJ"
+        },
+        {
+          "row": 0,
+          "col": 3,
+          "content": "",
+          "isBlank": false,
+          "correctAnswer": ""
+        },
+        {
+          "row": 0,
+          "col": 4,
+          "content": "",
+          "isBlank": false,
+          "correctAnswer": ""
+        },
+        {
+          "row": 1,
+          "col": 0,
+          "content": "",
+          "isBlank": true,
+          "correctAnswer": "Vector Base"
+        },
+        {
+          "row": 1,
+          "col": 1,
+          "content": "",
+          "isBlank": true,
+          "correctAnswer": "Coeficientes de Var.Base"
+        },
+        {
+          "row": 1,
+          "col": 2,
+          "content": "",
+          "isBlank": true,
+          "correctAnswer": "Valores de Var.Base"
+        },
+        {
+          "row": 1,
+          "col": 3,
+          "content": "",
+          "isBlank": true,
+          "correctAnswer": "Variables Reales"
+        },
+        {
+          "row": 1,
+          "col": 4,
+          "content": "",
+          "isBlank": true,
+          "correctAnswer": "Variables slack"
+        },
+        {
+          "row": 2,
+          "col": 0,
+          "content": "",
+          "isBlank": false,
+          "correctAnswer": ""
+        },
+        {
+          "row": 2,
+          "col": 1,
+          "content": "",
+          "isBlank": false,
+          "correctAnswer": ""
+        },
+        {
+          "row": 2,
+          "col": 2,
+          "content": "",
+          "isBlank": false,
+          "correctAnswer": ""
+        },
+        {
+          "row": 2,
+          "col": 3,
+          "content": "",
+          "isBlank": false,
+          "correctAnswer": ""
+        },
+        {
+          "row": 2,
+          "col": 4,
+          "content": "",
+          "isBlank": false,
+          "correctAnswer": ""
+        },
+        {
+          "row": 3,
+          "col": 0,
+          "content": "",
+          "isBlank": false,
+          "correctAnswer": ""
+        },
+        {
+          "row": 3,
+          "col": 1,
+          "content": "",
+          "isBlank": false,
+          "correctAnswer": ""
+        },
+        {
+          "row": 3,
+          "col": 2,
+          "content": "",
+          "isBlank": true,
+          "correctAnswer": "Z"
+        },
+        {
+          "row": 3,
+          "col": 3,
+          "content": "",
+          "isBlank": true,
+          "correctAnswer": "Condicion de optimilidad"
+        },
+        {
+          "row": 3,
+          "col": 4,
+          "content": "",
+          "isBlank": true,
+          "correctAnswer": "ceros"
+        }
+      ]
+    },
+    "draggableOptions": [
+      "CJ",
+      "Vector Base",
+      "Coeficientes de Var.Base",
+      "Valores de Var.Base",
+      "Variables Reales",
+      "Variables slack",
+      "Z",
+      "Condicion de optimilidad",
+      "ceros"
+    ],
+    "id": "1778078749189-c648b867f515"
+  },
+  {
+    "type": "multiple_choice",
+    "statement": "Los pilares de la programación lineal son:\nXi >= 0  Cb X AJ - cj >= 0    Z = F(x) -->optimizar (lineal y única)  1 ó más Ri >= bi, 1 ó más Ri<= bi   Z = F(x) -->Maximizar (lineal y única)\nA-1 X B >= X",
+    "options": [
+      "Todas son correctas",
+      "ninguna es correcta",
+      "1,3,5",
+      "2,4,6",
+      "1,3,4"
+    ],
+    "correctAnswer": "1,3,4",
+    "id": "1778162456247-af051ff0758b58"
+  },
+  {
+    "type": "multiple_choice",
+    "statement": "George Dantzig nació en 1.914 y trabajó para la Rand Corporation después de su aporte a la fuerza aérea. Fue profesor  de Investigación de Operaciones en la Universidad de Standford",
+    "options": [
+      "Verdadero",
+      "Falso"
+    ],
+    "correctAnswer": "Verdadero",
+    "ocrText": "George Dantzig nació en 1.914 y trabajó para la Rand Corporation después de su aporte a la fuerza aérea. Fue profesor\nde Investigación de Operaciones en la Universidad de Standford\nSeleccione una:\nVerdadero\nFalso\nLa respuesta correcta es 'Verdadero'",
+    "id": "1778162651294-776f3a000214b"
+  },
+  {
+    "type": "multiple_choice",
+    "statement": "El costo de oportunidad esta asociado a las variables",
+    "options": [
+      "Slack y representa cuanto pierdo por cada unidad",
+      "Reales y representa sobrante",
+      "Reales y representa cuanto pierdo si fuerzo su producción",
+      "Slack y representa cuanto disminuye el Z por cada unidad"
+    ],
+    "correctAnswer": "Reales y representa cuanto pierdo si fuerzo su producción",
+    "ocrText": "El costo de oportunidad esta asociado a las variables\nSeleccione una:\na.\nSlack y representa cuanto pierdo por cada unidad\nb.\nReales y representa sobrante\nC.\nReales y representa cuanto pierdo si fuerzo su producción\n>\nd.\nSlack y representa cuanto disminuye el Z por cada unidad\nLa respuesta correcta es: Reales y representa cuanto pierdo si fuerzo su producción",
+    "id": "1778162738389-7fcf174f4abd28"
+  },
+  {
+    "type": "multiple_choice",
+    "statement": "George Dantzig fue quién (marque la incorrecta)",
+    "options": [
+      "Fue miembro de la IEEE",
+      "Fue miembro del proyecto SCOOP Scientific Computation of Optimun Programs) de la fuerza aérea",
+      "Fue profesor de Investigación de Operaciones en la Universidad de Standford",
+      "formuló el problema de la programación lineal y diseno el método simplex de solución"
+    ],
+    "correctAnswer": "Fue miembro de la IEEE",
+    "ocrText": "George Dantzig fue quién (marque la incorrecta)\nSeleccione una:\na.\nFue miembro de la IEEE\nb.\nFue miembro del proyecto SCOOP Scientific Computation of Optimun Programs) de la fuerza aérea\nc.\nFue profesor de Investigación de Operaciones en la Universidad de Standford\nd.\nformuló el problema de la programación lineal y diseno el método simplex de solución\nLa respuesta correcta es: Fue miembro de la IEEE",
+    "id": "1778162738389-8e2c1f0d186c18"
+  },
+  {
+    "type": "multiple_choice",
+    "statement": "Las restricciones siempre se pueden convertir en ecuaciones",
+    "options": [
+      "sumando 0 restando las variables de holgura 0 de excedentes de los lados izquierdos, según corresponda.",
+      "sumando 0 restando las variables de holgura 0 de excedentes de los lados derechos, según corresponda.",
+      "sumando las variables de holgura 0 de excedentes de los lados derechos, según corresponda.",
+      "restando las variables de holgura de los lados izquierdos, según corresponda."
+    ],
+    "correctAnswer": "sumando 0 restando las variables de holgura 0 de excedentes de los lados izquierdos, según corresponda.",
+    "ocrText": "Las restricciones siempre se pueden convertir en ecuaciones\nSeleccione una:\na.\nsumando 0 restando las variables de holgura 0 de excedentes de los lados izquierdos, según corresponda.\nb.\nsumando 0 restando las variables de holgura 0 de excedentes de los lados derechos, según corresponda.\nC.\nsumando las variables de holgura 0 de excedentes de los lados derechos, según corresponda.\nd.\nrestando las variables de holgura de los lados izquierdos, según corresponda.\nLa respuesta correcta es: sumando 0 restando las variables de holgura 0 de excedentes de los lados izquierdos, según\ncorresponda.",
+    "id": "1778162738389-080b3ff3d09ec"
+  },
+  {
+    "type": "multiple_choice",
+    "statement": "El costo de oportunidad esta asociado a las variables reales y me indica cuando debo aumentar la rentabilidad del\nartículo para que convenga su producción",
+    "options": [
+      "Verdadero",
+      "Falso "
+    ],
+    "correctAnswer": "Verdadero",
+    "ocrText": "El costo de oportunidad esta asociado a las variables reales y me indica cuando debo aumentar la rentabilidad del\nartículo para que convenga su producción\nSeleccione una:\nVerdadero\nFalso X\nLa respuesta correcta es 'Verdadero'",
+    "id": "1778162797983-d6dd86a1f5ca98"
+  },
+  {
+    "type": "multiple_choice",
+    "statement": "La programación lineal se aplica a",
+    "options": [
+      "Modelos de optimización de funciones objetivo y restricciones no lineales",
+      "Modelos de optimización de funciones objetivo y restricciones estrictamente exponenciales",
+      "Modelos de optimización de funciones objetivo y restricciones estrictamente lineales",
+      "Modelos de optimización de funciones objetivo y restricciones estrictamente cuadráticas"
+    ],
+    "correctAnswer": "Modelos de optimización de funciones objetivo y restricciones estrictamente lineales",
+    "ocrText": "La programación lineal se aplica a\nSeleccione una:\na.\nModelos de optimización de funciones objetivo y restricciones no lineales\nb.\nModelos de optimización de funciones objetivo y restricciones estrictamente exponenciales\nC.\nModelos de optimización de funciones objetivo y restricciones estrictamente lineales\nd.\nModelos de optimización de funciones objetivo y restricciones estrictamente cuadráticas\nLa respuesta correcta es: Modelos de optimización de funciones objetivo y restricciones estrictamente lineales",
+    "id": "1778162828538-3b0ccfcbb43388"
+  },
+  {
+    "type": "drag_and_drop",
+    "statement": "Resolver",
+    "textParts": [
+      "Tanto en la ",
+      "__blank__",
+      " como en las ",
+      "__blank__",
+      ", el aporte o consumo de cada variable es independiente del resto de las variables, siendo la contribucion/uso total de todas las actividades igual a la suma de cada actividad individual (se debe al supuesto de ",
+      "__blank__",
+      " )"
+    ],
+    "draggableOptions": [
+      "funcion objetivo",
+      "restricciones",
+      "certidumbre",
+      "no negatividad",
+      "variables",
+      "recursos",
+      "proporcionalidad",
+      "coeficientes tecnologicos",
+      "Aditividad"
+    ],
+    "correctAnswers": [
+      "funcion objetivo",
+      "restricciones",
+      "Aditividad"
+    ],
+    "id": "1778162994984-1024f9fbeb8ce8"
+  },
+  {
+    "type": "multiple_choice",
+    "statement": "Las ideas básicas de la programación lineal surgieron de un estudio acerca de problemas de asignación de recursos\nhecho por la fuerza aérea de los EE. UU. durante la Segunda Guerra Mundial",
+    "options": [
+      "verdadero",
+      "falso"
+    ],
+    "correctAnswer": "verdadero",
+    "ocrText": "Las ideas básicas de la programación lineal surgieron de un estudio acerca de problemas de asignación de recursos\nhecho por la fuerza aérea de los EE. UU. durante la Segunda Guerra Mundial\nSeleccione una:\nVerdadero\nFalso\nLa respuesta correcta es 'Verdadero'",
+    "id": "1778163026314-b402cb3e55d138"
   }
 ]

@@ -648,7 +648,6 @@
       "__blank__"
     ],
     "draggableOptions": [
-      "funcion objetivo",
       "variables",
       "certidumbre",
       "divisibilidad",
@@ -664,7 +663,6 @@
       "funcion objetivo",
       "certidumbre"
     ],
-    "ocrText": "coeficientes, tanto de la\nvariables\ncomo de las restricciones, son conocidos con exactitud y además no varian durante el período de tiempo en que se realiza el estudio (supuesto de\ncertidumbre\n)\ndivisibilidad\nrecursos\nAditividad\ncoeficientes tecnológicos\nno negatividad\nproporcionalidad\nfuncion objetivo",
     "id": "1777999173471-4f369a7b9a9148"
   },
   {
@@ -1015,12 +1013,11 @@
     "statement": "El Valor marginal:",
     "options": [
       "está asociado a las variables reales y me indica la cantidad perdida a causa de no haber adoptado una determinada acción al adoptar una que no es la más conveniente",
-      "es el coeficiente del cambio en el valor óptimo causado por cualquier aumento 0 disminucion admisible en el rango admisible del recurso, se presenta cuando no existe un sobrante de recursos",
+      "es el coeficiente del cambio en el valor óptimo causado por cualquier aumento o disminucion admisible en el rango admisible del recurso, se presenta cuando  existe un sobrante de recursos",
       "está asociado a las variables slack y me indica la cantidad perdida a causa de no haber adoptado una determinada acción al adoptar una que no es la más conveniente",
-      "es el coeficiente del cambio en el valor óptimo causado por cualquier aumento 0 disminución admisible en el rango admisible del recurso, se presenta cuando no existe un sobrante de recursos"
+      "es el coeficiente del cambio en el valor óptimo causado por cualquier aumento o disminución admisible en el rango admisible del recurso, se presenta cuando no existe un sobrante de recursos"
     ],
-    "correctAnswer": "es el coeficiente del cambio en el valor óptimo causado por cualquier aumento 0 disminucion admisible en el rango admisible del recurso, se presenta cuando no existe un sobrante de recursos",
-    "ocrText": "El Valor marginal:\nSeleccione una:\na. está asociado a las variables reales y me indica la cantidad perdida a causa de no haber adoptado una determinada acción al adoptar una que no es la más conveniente\nb. es el coeficiente del cambio en el valor óptimo causado por cualquier aumento 0 disminucion admisible en el rango admisible del productos, se presenta cuando no existe un cantidad de producto\nC.\nes el coeficiente del cambio en el valor óptimo causado por cualquier aumento 0 disminucion admisible en el rango admisible del recurso, se presenta cuando no existe un sobrante de recursos\nd.\nestá asociado a las variables slack y me indica la cantidad perdida a causa de no haber adoptado una determinada acción al adoptar una que no es la más conveniente\nLa respuesta correcta es: es el coeficiente del cambio en el valor óptimo causado por cualquier aumento 0 disminución admisible en el rango admisible del recurso, se presenta cuando no existe un sobrante de recursos",
+    "correctAnswer": "es el coeficiente del cambio en el valor óptimo causado por cualquier aumento o disminución admisible en el rango admisible del recurso, se presenta cuando no existe un sobrante de recursos",
     "id": "1777999892437-bdbfefb3f78988"
   },
   {
@@ -1164,14 +1161,12 @@
     "type": "multiple_choice",
     "statement": "La factibilidad de la solucion óptima actual se ve afectada solo si cambia:",
     "options": [
-      "Se varia los coeficientes tecnológicos 0 se agregue un nuevo producto.",
-      "Se varia el lado derecho de las restricciones, O se agrega una nueva restriccion al modelo.",
+      "Se varia los coeficientes tecnológicos o se agregue un nuevo producto.",
       "Se varian los coeficientes del funcional",
       "Se varia la disponibilidad de productos.",
       "Se varia el lado derecho de las restricciones, O se agrega una nueva restricción al modelo."
     ],
     "correctAnswer": "Se varia el lado derecho de las restricciones, O se agrega una nueva restricción al modelo.",
-    "ocrText": "La factibilidad de la solucion óptima actual se ve afectada solo si cambia:\nSeleccione una:\na. Se varia los coeficientes tecnológicos 0 se agregue un nuevo producto.\nb. Se varia el lado derecho de las restricciones, O se agrega una nueva restriccion al modelo.\nC.\nSe varian los coeficientes del funcional\nd. Se varia la disponibilidad de productos.\nLa respuesta correcta es: Se varia el lado derecho de las restricciones, O se agrega una nueva restricción al modelo.",
     "id": "1778002572370-3ef3d6da30edd"
   },
   {
@@ -1215,7 +1210,7 @@
   },
   {
     "type": "multiple_choice",
-    "statement": "El análisis de sensibilidad 0 postoptimal para los modelos de Programación Lineal, tiene por objetivo:",
+    "statement": "El análisis de sensibilidad o postoptimal para los modelos de Programación Lineal, tiene por objetivo:",
     "options": [
       "identificar el impacto que provoca en los resultados del problema original realizar determinadas variaciones en los parámetros, variables O restricciones del modelo, sin necesidad de resolver el problema nuevamente,es decir sin volver a realizar el gráfico",
       "identificar los resultados del problema original realizar determinadas variaciones en los parámetros, variables 0 restricciones del modelo conel método simplex.",
@@ -1223,7 +1218,6 @@
       "Ver los cambios del problema en el modelo, a través del método simplex."
     ],
     "correctAnswer": "identificar el impacto que provoca en los resultados del problema original realizar determinadas variaciones en los parámetros, variables O restricciones del modelo, sin necesidad de resolver el problema nuevamente,es decir sin volver a realizar el gráfico",
-    "ocrText": "El análisis de sensibilidad 0 postoptimal para los modelos de Programación Lineal, tiene por objetivo:\nSeleccione una:\na.\nidentificar el impacto que provoca en los resultados del problema original realizar determinadas variaciones en los parámetros, variables O restricciones del modelo, sin necesidad de resolver el problema nuevamente,es decir sin volver a realizar el gráfico o\nlas iteraciones del método simplex.\nb.\nidentificar los resultados del problema original realizar determinadas variaciones en los parámetros, variables 0 restricciones del modelo conel método simplex.\nC.\nresolver el problema nuevamente,es decir realizar el gráfico 0 las iteraciones del método simplex.\nd.\nVer los cambios del problema en el modelo, a través del método simplex.\nLa respuesta correcta es: identificar el impacto que provoca en los resultados del problema original realizar determinadas variaciones en los parámetros, variables O restricciones del modelo, sin necesidad de resolver el problema nuevamente,es decir sin volver a realizar el\ngráfico 0 las iteraciones del método simplex.",
     "id": "1778002572370-93df14c24245"
   },
   {
@@ -1244,13 +1238,11 @@
     "statement": "El costo de oportunidad aporta dos datos al tomador de decisiones (Z--> MAX):",
     "options": [
       "Cuanto debe disminuir el coeficiente del funcional de ese producto para que convenga producirlo y cuanto se ganaria por forzar su fabricacion, en caso de decir realizarlo cuando la tabla óptima informa que no es conveniente.",
-      "Cuanto debe aumentar el coeficiente del funcional de ese producto para que convenga producirlo y cuanto se perderia por forzar su fabricacion, en caso de decir realizarlo cuando la tabla óptima informa que no es conveniente",
       "Cuanto debe disminuir el coeficiente del funcional de ese producto para que convenga producirlo",
       "cuanto se perderia por forzar su fabricación, en caso de decir realizarlo cuando la tabla óptima informa que no es conveniente.",
       "Cuanto debe aumentar el coeficiente del funcional de ese producto para que convenga producirlo y cuanto se perderia por forzar su fabricación, en caso de decir realizarlo cuando la tabla óptima informa que no es conveniente"
     ],
     "correctAnswer": "Cuanto debe aumentar el coeficiente del funcional de ese producto para que convenga producirlo y cuanto se perderia por forzar su fabricación, en caso de decir realizarlo cuando la tabla óptima informa que no es conveniente",
-    "ocrText": "El costo de oportunidad aporta dos datos al tomador de decisiones (Z--> MAX):\nSeleccione una:\na.\nCuanto debe disminuir el coeficiente del funcional de ese producto para que convenga producirlo y cuanto se ganaria por forzar su fabricacion, en caso de decir realizarlo cuando la tabla óptima informa que no es conveniente.\nb.\nCuanto debe aumentar el coeficiente del funcional de ese producto para que convenga producirlo y cuanto se perderia por forzar su fabricacion, en caso de decir realizarlo cuando la tabla óptima informa que no es conveniente\nC.\nCuanto debe disminuir el coeficiente del funcional de ese producto para que convenga producirlo\nd.\ncuanto se perderia por forzar su fabricación, en caso de decir realizarlo cuando la tabla óptima informa que no es conveniente.\nLa respuesta correcta es: Cuanto debe aumentar el coeficiente del funcional de ese producto para que convenga producirlo y cuanto se perderia por forzar su fabricación, en caso de decir realizarlo cuando la tabla óptima informa que no es conveniente",
     "id": "1778002747461-ea2799c8fc26e"
   },
   {
@@ -1284,12 +1276,11 @@
     "statement": "Una variacion en los recursos de las restricciones origina:",
     "options": [
       "Oscilaciones en la pendiente de las restricciones que cambien el óptimo que implican un cambio en la región factible.",
-      "Desplaza la restricción paralela a si misma, pero si no está saturada, dentro de ciertos limites, el punto optimo sigue siendo el mismo.",
+      "Desplaza la restricción paralela a si misma, pero si no está saturada, fuera de ciertos limites, el punto optimo sigue siendo el mismo.",
       "Oscilaciones dentro de la pendiente del funcional, que dentro de ciertos limites no cambia el punto óptimo.",
       "Desplaza la restricción paralela a si misma, pero si no está saturada, dentro de ciertos limites, el punto óptimo sigue siendo el mismo."
     ],
     "correctAnswer": "Desplaza la restricción paralela a si misma, pero si no está saturada, dentro de ciertos limites, el punto óptimo sigue siendo el mismo.",
-    "ocrText": "Una variacion en los recursos de las restricciones origina:\nSeleccione una:\na. Oscilaciones en la pendiente de las restricciones que cambien el óptimo que implican un cambio en la región factible.\nb. Desplaza la restricción paralela a si misma, pero si no está saturada, dentro de ciertos limites, el punto optimo sigue siendo el mismo.\nC. Oscilaciones dentro de la pendiente del funcional, que dentro de ciertos limites no cambia el punto óptimo.\nLa respuesta correcta es: Desplaza la restricción paralela a si misma, pero si no está saturada, dentro de ciertos limites, el punto óptimo sigue siendo el mismo.",
     "id": "1778002747461-630606569e2c38"
   },
   {
@@ -1341,17 +1332,6 @@
     "correctAnswer": "verdadero",
     "ocrText": "En el problema de cargo fijo se utilizan variables enteras binarias auxliares para manejar la continuidad en la función de costo objetivo.\nSeleccione una:\n\n© Verdadero\n\nO Falso",
     "id": "1778040409292-46dbc8e39128c"
-  },
-  {
-    "type": "multiple_choice",
-    "statement": "El problema de cargo fijo tiene que ver con situaciones en que la actividad económica",
-    "options": [
-      "verdadero",
-      "falso"
-    ],
-    "correctAnswer": "verdadero",
-    "ocrText": "El problema de cargo fijo tiene que ver con situaciones en que la actividad económica\nincurre en dos tipos de costos: un costo fijo necesario para iniciar la actividad y un\ncosto variable proporcional al nivel de la actividad",
-    "id": "1778040461268-94e4f5db2b0d08"
   },
   {
     "type": "multiple_choice",
@@ -1540,13 +1520,12 @@
   },
   {
     "type": "multiple_choice",
-    "statement": "La toma de decisiones de emprender 0 no un proyecto suele hacerse conforme a consideraciones y prioridades preestablecidas de presupuesto limitado. Una",
+    "statement": "La toma de decisiones de emprender 0 no un proyecto suele hacerse conforme a consideraciones y prioridades preestablecidas de presupuesto limitado. Una herramienta para resolver esta situacion es programacion lineal entera",
     "options": [
       "Verdadero",
       "Falso"
     ],
     "correctAnswer": "Verdadero",
-    "ocrText": "La toma de decisiones de emprender 0 no un proyecto suele hacerse conforme a consideraciones y prioridades preestablecidas de presupuesto limitado. Una\nherramienta para resolver esta situación es programación lineal entera\nSeleccione una:\nVerdadero\nFalso\nLa respuesta correcta es 'Verdadero'",
     "id": "1778074171829-151421d9fd013"
   },
   {
@@ -1585,5 +1564,167 @@
     "correctAnswer": "Falso",
     "ocrText": "Los modelos en los que las restricciones se satisfacen al mismo tiempo (Uno - u\notro) 0 son dependientes (Si - entonces), utilizan variables binarias auxiliares. La transformación utiliza un artificio matemático para presentar la\nrestricción especial como restricciones \"and\" (\"y\").\nSeleccione una:\n<\n>\nVerdadero\nFalso\nLa respuesta correcta es 'Falso'",
     "id": "1778074419801-0a46f862a321d8"
+  },
+  {
+    "type": "table_drag_and_drop",
+    "statement": "Resolver",
+    "table": {
+      "rows": 4,
+      "columns": 5,
+      "cells": [
+        {
+          "row": 0,
+          "col": 0,
+          "content": "",
+          "isBlank": false,
+          "correctAnswer": ""
+        },
+        {
+          "row": 0,
+          "col": 1,
+          "content": "",
+          "isBlank": false,
+          "correctAnswer": ""
+        },
+        {
+          "row": 0,
+          "col": 2,
+          "content": "",
+          "isBlank": true,
+          "correctAnswer": "CJ"
+        },
+        {
+          "row": 0,
+          "col": 3,
+          "content": "",
+          "isBlank": false,
+          "correctAnswer": ""
+        },
+        {
+          "row": 0,
+          "col": 4,
+          "content": "",
+          "isBlank": false,
+          "correctAnswer": ""
+        },
+        {
+          "row": 1,
+          "col": 0,
+          "content": "",
+          "isBlank": true,
+          "correctAnswer": "Vector Base"
+        },
+        {
+          "row": 1,
+          "col": 1,
+          "content": "",
+          "isBlank": true,
+          "correctAnswer": "Coeficientes de Var.Base"
+        },
+        {
+          "row": 1,
+          "col": 2,
+          "content": "",
+          "isBlank": true,
+          "correctAnswer": "Valores de Var.Base"
+        },
+        {
+          "row": 1,
+          "col": 3,
+          "content": "",
+          "isBlank": true,
+          "correctAnswer": "Variables Reales"
+        },
+        {
+          "row": 1,
+          "col": 4,
+          "content": "",
+          "isBlank": true,
+          "correctAnswer": "Variables slack"
+        },
+        {
+          "row": 2,
+          "col": 0,
+          "content": "",
+          "isBlank": false,
+          "correctAnswer": ""
+        },
+        {
+          "row": 2,
+          "col": 1,
+          "content": "",
+          "isBlank": false,
+          "correctAnswer": ""
+        },
+        {
+          "row": 2,
+          "col": 2,
+          "content": "",
+          "isBlank": false,
+          "correctAnswer": ""
+        },
+        {
+          "row": 2,
+          "col": 3,
+          "content": "",
+          "isBlank": false,
+          "correctAnswer": ""
+        },
+        {
+          "row": 2,
+          "col": 4,
+          "content": "",
+          "isBlank": false,
+          "correctAnswer": ""
+        },
+        {
+          "row": 3,
+          "col": 0,
+          "content": "",
+          "isBlank": false,
+          "correctAnswer": ""
+        },
+        {
+          "row": 3,
+          "col": 1,
+          "content": "",
+          "isBlank": false,
+          "correctAnswer": ""
+        },
+        {
+          "row": 3,
+          "col": 2,
+          "content": "",
+          "isBlank": true,
+          "correctAnswer": "Z"
+        },
+        {
+          "row": 3,
+          "col": 3,
+          "content": "",
+          "isBlank": true,
+          "correctAnswer": "Condicion de optimilidad"
+        },
+        {
+          "row": 3,
+          "col": 4,
+          "content": "",
+          "isBlank": true,
+          "correctAnswer": "ceros"
+        }
+      ]
+    },
+    "draggableOptions": [
+      "CJ",
+      "Vector Base",
+      "Coeficientes de Var.Base",
+      "Valores de Var.Base",
+      "Variables Reales",
+      "Variables slack",
+      "Z",
+      "Condicion de optimilidad",
+      "ceros"
+    ],
+    "id": "1778078749189-c648b867f515"
   }
 ]

@@ -1238,13 +1238,11 @@
     "statement": "El costo de oportunidad aporta dos datos al tomador de decisiones (Z--> MAX):",
     "options": [
       "Cuanto debe disminuir el coeficiente del funcional de ese producto para que convenga producirlo y cuanto se ganaria por forzar su fabricacion, en caso de decir realizarlo cuando la tabla óptima informa que no es conveniente.",
-      "Cuanto debe aumentar el coeficiente del funcional de ese producto para que convenga producirlo y cuanto se perderia por forzar su fabricacion, en caso de decir realizarlo cuando la tabla óptima informa que no es conveniente",
       "Cuanto debe disminuir el coeficiente del funcional de ese producto para que convenga producirlo",
       "cuanto se perderia por forzar su fabricación, en caso de decir realizarlo cuando la tabla óptima informa que no es conveniente.",
       "Cuanto debe aumentar el coeficiente del funcional de ese producto para que convenga producirlo y cuanto se perderia por forzar su fabricación, en caso de decir realizarlo cuando la tabla óptima informa que no es conveniente"
     ],
     "correctAnswer": "Cuanto debe aumentar el coeficiente del funcional de ese producto para que convenga producirlo y cuanto se perderia por forzar su fabricación, en caso de decir realizarlo cuando la tabla óptima informa que no es conveniente",
-    "ocrText": "El costo de oportunidad aporta dos datos al tomador de decisiones (Z--> MAX):\nSeleccione una:\na.\nCuanto debe disminuir el coeficiente del funcional de ese producto para que convenga producirlo y cuanto se ganaria por forzar su fabricacion, en caso de decir realizarlo cuando la tabla óptima informa que no es conveniente.\nb.\nCuanto debe aumentar el coeficiente del funcional de ese producto para que convenga producirlo y cuanto se perderia por forzar su fabricacion, en caso de decir realizarlo cuando la tabla óptima informa que no es conveniente\nC.\nCuanto debe disminuir el coeficiente del funcional de ese producto para que convenga producirlo\nd.\ncuanto se perderia por forzar su fabricación, en caso de decir realizarlo cuando la tabla óptima informa que no es conveniente.\nLa respuesta correcta es: Cuanto debe aumentar el coeficiente del funcional de ese producto para que convenga producirlo y cuanto se perderia por forzar su fabricación, en caso de decir realizarlo cuando la tabla óptima informa que no es conveniente",
     "id": "1778002747461-ea2799c8fc26e"
   },
   {
@@ -1278,12 +1276,11 @@
     "statement": "Una variacion en los recursos de las restricciones origina:",
     "options": [
       "Oscilaciones en la pendiente de las restricciones que cambien el óptimo que implican un cambio en la región factible.",
-      "Desplaza la restricción paralela a si misma, pero si no está saturada, dentro de ciertos limites, el punto optimo sigue siendo el mismo.",
+      "Desplaza la restricción paralela a si misma, pero si no está saturada, fuera de ciertos limites, el punto optimo sigue siendo el mismo.",
       "Oscilaciones dentro de la pendiente del funcional, que dentro de ciertos limites no cambia el punto óptimo.",
       "Desplaza la restricción paralela a si misma, pero si no está saturada, dentro de ciertos limites, el punto óptimo sigue siendo el mismo."
     ],
     "correctAnswer": "Desplaza la restricción paralela a si misma, pero si no está saturada, dentro de ciertos limites, el punto óptimo sigue siendo el mismo.",
-    "ocrText": "Una variacion en los recursos de las restricciones origina:\nSeleccione una:\na. Oscilaciones en la pendiente de las restricciones que cambien el óptimo que implican un cambio en la región factible.\nb. Desplaza la restricción paralela a si misma, pero si no está saturada, dentro de ciertos limites, el punto optimo sigue siendo el mismo.\nC. Oscilaciones dentro de la pendiente del funcional, que dentro de ciertos limites no cambia el punto óptimo.\nLa respuesta correcta es: Desplaza la restricción paralela a si misma, pero si no está saturada, dentro de ciertos limites, el punto óptimo sigue siendo el mismo.",
     "id": "1778002747461-630606569e2c38"
   },
   {
@@ -1335,17 +1332,6 @@
     "correctAnswer": "verdadero",
     "ocrText": "En el problema de cargo fijo se utilizan variables enteras binarias auxliares para manejar la continuidad en la función de costo objetivo.\nSeleccione una:\n\n© Verdadero\n\nO Falso",
     "id": "1778040409292-46dbc8e39128c"
-  },
-  {
-    "type": "multiple_choice",
-    "statement": "El problema de cargo fijo tiene que ver con situaciones en que la actividad económica",
-    "options": [
-      "verdadero",
-      "falso"
-    ],
-    "correctAnswer": "verdadero",
-    "ocrText": "El problema de cargo fijo tiene que ver con situaciones en que la actividad económica\nincurre en dos tipos de costos: un costo fijo necesario para iniciar la actividad y un\ncosto variable proporcional al nivel de la actividad",
-    "id": "1778040461268-94e4f5db2b0d08"
   },
   {
     "type": "multiple_choice",
@@ -1534,13 +1520,12 @@
   },
   {
     "type": "multiple_choice",
-    "statement": "La toma de decisiones de emprender 0 no un proyecto suele hacerse conforme a consideraciones y prioridades preestablecidas de presupuesto limitado. Una",
+    "statement": "La toma de decisiones de emprender 0 no un proyecto suele hacerse conforme a consideraciones y prioridades preestablecidas de presupuesto limitado. Una herramienta para resolver esta situacion es programacion lineal entera",
     "options": [
       "Verdadero",
       "Falso"
     ],
     "correctAnswer": "Verdadero",
-    "ocrText": "La toma de decisiones de emprender 0 no un proyecto suele hacerse conforme a consideraciones y prioridades preestablecidas de presupuesto limitado. Una\nherramienta para resolver esta situación es programación lineal entera\nSeleccione una:\nVerdadero\nFalso\nLa respuesta correcta es 'Verdadero'",
     "id": "1778074171829-151421d9fd013"
   },
   {
@@ -1579,5 +1564,180 @@
     "correctAnswer": "Falso",
     "ocrText": "Los modelos en los que las restricciones se satisfacen al mismo tiempo (Uno - u\notro) 0 son dependientes (Si - entonces), utilizan variables binarias auxiliares. La transformación utiliza un artificio matemático para presentar la\nrestricción especial como restricciones \"and\" (\"y\").\nSeleccione una:\n<\n>\nVerdadero\nFalso\nLa respuesta correcta es 'Falso'",
     "id": "1778074419801-0a46f862a321d8"
+  },
+  {
+    "type": "table_drag_and_drop",
+    "statement": "Resolver",
+    "table": {
+      "rows": 4,
+      "columns": 5,
+      "cells": [
+        {
+          "row": 0,
+          "col": 0,
+          "content": "",
+          "isBlank": false,
+          "correctAnswer": ""
+        },
+        {
+          "row": 0,
+          "col": 1,
+          "content": "",
+          "isBlank": false,
+          "correctAnswer": ""
+        },
+        {
+          "row": 0,
+          "col": 2,
+          "content": "",
+          "isBlank": true,
+          "correctAnswer": "CJ"
+        },
+        {
+          "row": 0,
+          "col": 3,
+          "content": "",
+          "isBlank": false,
+          "correctAnswer": ""
+        },
+        {
+          "row": 0,
+          "col": 4,
+          "content": "",
+          "isBlank": false,
+          "correctAnswer": ""
+        },
+        {
+          "row": 1,
+          "col": 0,
+          "content": "",
+          "isBlank": true,
+          "correctAnswer": "Vector Base"
+        },
+        {
+          "row": 1,
+          "col": 1,
+          "content": "",
+          "isBlank": true,
+          "correctAnswer": "Coeficientes de Var.Base"
+        },
+        {
+          "row": 1,
+          "col": 2,
+          "content": "",
+          "isBlank": true,
+          "correctAnswer": "Valores de Var.Base"
+        },
+        {
+          "row": 1,
+          "col": 3,
+          "content": "",
+          "isBlank": true,
+          "correctAnswer": "Variables Reales"
+        },
+        {
+          "row": 1,
+          "col": 4,
+          "content": "",
+          "isBlank": true,
+          "correctAnswer": "Variables slack"
+        },
+        {
+          "row": 2,
+          "col": 0,
+          "content": "",
+          "isBlank": false,
+          "correctAnswer": ""
+        },
+        {
+          "row": 2,
+          "col": 1,
+          "content": "",
+          "isBlank": false,
+          "correctAnswer": ""
+        },
+        {
+          "row": 2,
+          "col": 2,
+          "content": "",
+          "isBlank": false,
+          "correctAnswer": ""
+        },
+        {
+          "row": 2,
+          "col": 3,
+          "content": "",
+          "isBlank": false,
+          "correctAnswer": ""
+        },
+        {
+          "row": 2,
+          "col": 4,
+          "content": "",
+          "isBlank": false,
+          "correctAnswer": ""
+        },
+        {
+          "row": 3,
+          "col": 0,
+          "content": "",
+          "isBlank": false,
+          "correctAnswer": ""
+        },
+        {
+          "row": 3,
+          "col": 1,
+          "content": "",
+          "isBlank": false,
+          "correctAnswer": ""
+        },
+        {
+          "row": 3,
+          "col": 2,
+          "content": "",
+          "isBlank": true,
+          "correctAnswer": "Z"
+        },
+        {
+          "row": 3,
+          "col": 3,
+          "content": "",
+          "isBlank": true,
+          "correctAnswer": "Condicion de optimilidad"
+        },
+        {
+          "row": 3,
+          "col": 4,
+          "content": "",
+          "isBlank": true,
+          "correctAnswer": "ceros"
+        }
+      ]
+    },
+    "draggableOptions": [
+      "CJ",
+      "Vector Base",
+      "Coeficientes de Var.Base",
+      "Valores de Var.Base",
+      "Variables Reales",
+      "Variables slack",
+      "Z",
+      "Condicion de optimilidad",
+      "ceros"
+    ],
+    "id": "1778078749189-c648b867f515"
+  },
+  {
+    "type": "multiple_choice",
+    "statement": "Los pilares de la programación lineal son:\nXi >= 0  Cb X AJ - cj >= 0    Z = F(x) -->optimizar (lineal y única)  1 ó más Ri >= bi, 1 ó más Ri<= bi   Z = F(x) -->Maximizar (lineal y única)\nA-1 X B >= X",
+    "options": [
+      "Todas son correctas",
+      "ninguna es correcta",
+      "1,3,5",
+      "2,4,6",
+      "1,3,4"
+    ],
+    "correctAnswer": "1,3,5",
+    "id": "1778162456247-af051ff0758b58"
   }
 ]
