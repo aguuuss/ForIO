@@ -1,6 +1,6 @@
 # Quiz Practica Simplex
 
-Proyecto fullstack rapido para estudiar con preguntas tipo Quizizz. Incluye practica de multiple choice, preguntas con drag and drop, panel admin sin login y persistencia simple en JSON local.
+Proyecto fullstack para estudiar con preguntas tipo Quizizz. Incluye practica de multiple choice, preguntas con drag and drop, panel admin sin login, OCR y ahora una base Postgres preparada para crecer a multiples materias y años de carrera.
 
 ## Stack
 
@@ -9,12 +9,13 @@ Proyecto fullstack rapido para estudiar con preguntas tipo Quizizz. Incluye prac
 - Drag and Drop: `@dnd-kit/core`
 - OCR local: `tesseract.js`
 - OCR opcional: AWS Textract con AWS SDK v3
-- Persistencia: `server/data/questions.json`
+- Persistencia: Postgres
 
 ## Requisitos
 
 - Node.js 20 o superior
 - npm
+- Docker y Docker Compose
 
 ## Instalacion
 
@@ -24,11 +25,35 @@ Desde la raiz del proyecto:
 npm install
 ```
 
-Copiá `.env.example` a `.env` si querés configurar OCR o puerto:
+Copiá `.env.example` a `.env` para configurar base, materia default, OCR o puerto:
 
 ```bash
 cp .env.example .env
 ```
+
+## Base de datos local
+
+Levanta Postgres con Docker:
+
+```bash
+docker compose up -d
+```
+
+La configuracion default crea una base local accesible con:
+
+```bash
+DATABASE_URL=postgresql://forio:forio@localhost:5432/forio
+```
+
+## Migrar las preguntas actuales a Postgres
+
+Con Postgres levantado y `.env` configurado:
+
+```bash
+npm run seed-db --workspace server
+```
+
+Ese script toma `server/data/questions.json`, crea la materia default `Investigacion Operativa`, la ubica en `4to año` y carga todas las preguntas existentes en la tabla `questions`.
 
 ## Correr en desarrollo
 
@@ -49,6 +74,7 @@ Vite proxya `/api` hacia el backend, asi que desde el frontend alcanza con pedir
 npm run dev
 npm run build
 npm run start
+npm run seed-db --workspace server
 ```
 
 Tambien se pueden correr por separado:
@@ -68,6 +94,8 @@ npm run dev --workspace client
 
 ```http
 GET /api/questions
+GET /api/questions?subjectSlug=investigacion-operativa&yearNumber=4
+GET /api/subjects
 POST /api/questions
 PUT /api/questions/:id
 DELETE /api/questions/:id
@@ -75,6 +103,8 @@ POST /api/questions/bulk
 POST /api/ocr/upload
 POST /api/ocr/parse-question
 ```
+
+Las preguntas siguen siendo publicas y no hace falta usuario para esta etapa. Cada pregunta queda asociada a una materia, y cada materia queda asociada a un año de carrera.
 
 ## Importar capturas con OCR
 

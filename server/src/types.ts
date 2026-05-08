@@ -1,5 +1,20 @@
 export type QuestionType = "multiple_choice" | "drag_and_drop" | "table_drag_and_drop";
 
+export type SubjectSummary = {
+  id: string;
+  slug: string;
+  name: string;
+  careerName: string;
+  yearNumber: number;
+};
+
+export type SubjectInput = {
+  subjectSlug?: string;
+  subjectName?: string;
+  careerName?: string;
+  yearNumber?: number;
+};
+
 export type TableCell = {
   row: number;
   col: number;
@@ -44,8 +59,11 @@ export type TableDragAndDropQuestion = {
 };
 
 export type Question = MultipleChoiceQuestion | DragAndDropQuestion | TableDragAndDropQuestion;
+export type QuestionRecord = Question & {
+  subject: SubjectSummary;
+};
 
 export type QuestionInput =
-  | (Omit<MultipleChoiceQuestion, "id"> & { id?: string })
-  | (Omit<DragAndDropQuestion, "id"> & { id?: string })
-  | (Omit<TableDragAndDropQuestion, "id"> & { id?: string });
+  | ((Omit<MultipleChoiceQuestion, "id"> & { id?: string }) & SubjectInput)
+  | ((Omit<DragAndDropQuestion, "id"> & { id?: string }) & SubjectInput)
+  | ((Omit<TableDragAndDropQuestion, "id"> & { id?: string }) & SubjectInput);

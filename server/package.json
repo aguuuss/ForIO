@@ -8,14 +8,17 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "restore-latest": "node ./scripts/restore-latest.mjs",
-    "backup": "node ./scripts/create-backup.mjs"
+    "backup": "node ./scripts/create-backup.mjs",
+    "seed-db": "node ./scripts/seed-db.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-textract": "^3.723.0",
+    "@types/pg": "^8.20.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "multer": "^1.4.5-lts.1",
+    "pg": "^8.20.0",
     "tesseract.js": "^5.1.1"
   },
   "devDependencies": {

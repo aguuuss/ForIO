@@ -1,65 +1,9 @@
-import { promises as fs } from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-import type { Question, QuestionInput } from "./types.js";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const dataFile = path.resolve(__dirname, "../data/questions.json");
-
-async function readQuestions(): Promise<Question[]> {
-  try {
-    const raw = await fs.readFile(dataFile, "utf-8");
-    return JSON.parse(raw) as Question[];
-  } catch (error) {
-    if (isNodeError(error) && error.code === "ENOENT") {
-      await writeQuestions([]);
-      return [];
-    }
-    throw new Error(`No se pudo leer server/data/questions.json. ${error instanceof Error ? error.message : ""}`);
-  }
-}
-
-async function writeQuestions(questions: Question[]) {
-  const backupsDir = path.resolve(__dirname, "../data/backups");
-  try {
-    await fs.mkdir(backupsDir, { recursive: true });
-    // if there is an existing data file, copy it to backups before overwriting
-    try {
-      const current = await fs.readFile(dataFile, "utf-8");
-      const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-      const backupFile = path.resolve(backupsDir, `questions-${timestamp}.json`);
-      await fs.writeFile(backupFile, current, "utf-8");
-
-      // keep only the latest 10 backups
-      const files = await fs.readdir(backupsDir);
-      const backups = files.filter((f) => f.startsWith("questions-") && f.endsWith(".json")).sort();
-      const keep = 10;
-      if (backups.length > keep) {
-        const toRemove = backups.slice(0, backups.length - keep);
-        await Promise.all(toRemove.map((f) => fs.unlink(path.resolve(backupsDir, f))));
-      }
-    } catch (err) {
-      if (!(isNodeError(err) && err.code === "ENOENT")) {
-        // ignore missing data file, rethrow others
-        throw err;
-      }
-    }
-  } catch (err) {
-    // if backup writing fails, proceed to write main file but log to console
-    // eslint-disable-next-line no-console
-    console.error("No se pudo crear backup de questions.json:", err instanceof Error ? err.message : err);
-  }
-
-  await fs.writeFile(dataFile, JSON.stringify(questions, null, 2), "utf-8");
-}
+import type { PoolClient } from "pg";
+import { DEFAULT_SUBJECT, pool } from "./db.js";
+import type { Question, QuestionInput, QuestionRecord, SubjectInput, SubjectSummary } from "./types.js";
 
 function makeId() {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-}
-
-function isNodeError(error: unknown): error is NodeJS.ErrnoException {
-  return error instanceof Error && "code" in error;
 }
 
 function validateQuestion(input: QuestionInput): string | null {
@@ -130,8 +74,192 @@ function validateQuestion(input: QuestionInput): string | null {
   return "Tipo de pregunta no soportado.";
 }
 
-export async function getQuestions() {
-  return readQuestions();
+async function findSubjectBySlug(client: PoolClient, slug: string) {
+  const result = await client.query<{
+    id: string;
+    slug: string;
+    name: string;
+    career_name: string;
+    year_number: number;
+  }>(
+    `
+      SELECT id, slug, name, career_name, year_number
+      FROM subjects
+      WHERE slug = $1
+      LIMIT 1
+    `,
+    [slug]
+  );
+
+  return result.rows[0] ?? null;
+}
+
+function toSubjectSummary(row: {
+  id: string;
+  slug: string;
+  name: string;
+  career_name: string;
+  year_number: number;
+}): SubjectSummary {
+  return {
+    id: row.id,
+    slug: row.slug,
+    name: row.name,
+    careerName: row.career_name,
+    yearNumber: row.year_number
+  };
+}
+
+async function resolveSubject(client: PoolClient, input?: SubjectInput) {
+  const slug = input?.subjectSlug?.trim() || DEFAULT_SUBJECT.slug;
+  const existing = await findSubjectBySlug(client, slug);
+  if (existing) {
+    return existing;
+  }
+
+  const name = input?.subjectName?.trim() || DEFAULT_SUBJECT.name;
+  const careerName = input?.careerName?.trim() || DEFAULT_SUBJECT.careerName;
+  const yearNumber = input?.yearNumber || DEFAULT_SUBJECT.yearNumber;
+
+  const inserted = await client.query<{
+    id: string;
+    slug: string;
+    name: string;
+    career_name: string;
+    year_number: number;
+  }>(
+    `
+      INSERT INTO subjects (id, slug, name, career_name, year_number, is_public)
+      VALUES ($1, $2, $3, $4, $5, TRUE)
+      RETURNING id, slug, name, career_name, year_number
+    `,
+    [makeId(), slug, name, careerName, yearNumber]
+  );
+
+  return inserted.rows[0];
+}
+
+function serializeQuestionContent(input: QuestionInput) {
+  if (input.type === "multiple_choice") {
+    return {
+      options: input.options,
+      correctAnswer: input.correctAnswer
+    };
+  }
+
+  if (input.type === "drag_and_drop") {
+    return {
+      textParts: input.textParts,
+      draggableOptions: input.draggableOptions,
+      correctAnswers: input.correctAnswers
+    };
+  }
+
+  return {
+    table: input.table,
+    draggableOptions: input.draggableOptions
+  };
+}
+
+function mapRowToQuestion(row: {
+  id: string;
+  type: Question["type"];
+  statement: string;
+  content: Record<string, unknown>;
+  ocr_text: string | null;
+  subject_id: string;
+  subject_slug: string;
+  subject_name: string;
+  career_name: string;
+  year_number: number;
+}): QuestionRecord {
+  return {
+    id: row.id,
+    type: row.type,
+    statement: row.statement,
+    ...(row.content as Omit<Question, "id" | "type" | "statement" | "ocrText">),
+    ocrText: row.ocr_text ?? undefined,
+    subject: {
+      id: row.subject_id,
+      slug: row.subject_slug,
+      name: row.subject_name,
+      careerName: row.career_name,
+      yearNumber: row.year_number
+    }
+  } as QuestionRecord;
+}
+
+async function listQuestionsInternal(filters?: { subjectSlug?: string; yearNumber?: number }) {
+  const values: Array<string | number> = [];
+  const where: string[] = [];
+
+  if (filters?.subjectSlug?.trim()) {
+    values.push(filters.subjectSlug.trim());
+    where.push(`subjects.slug = $${values.length}`);
+  }
+
+  if (typeof filters?.yearNumber === "number" && Number.isFinite(filters.yearNumber)) {
+    values.push(filters.yearNumber);
+    where.push(`subjects.year_number = $${values.length}`);
+  }
+
+  const whereClause = where.length ? `WHERE ${where.join(" AND ")}` : "";
+  const result = await pool.query<{
+    id: string;
+    type: Question["type"];
+    statement: string;
+    content: Record<string, unknown>;
+    ocr_text: string | null;
+    subject_id: string;
+    subject_slug: string;
+    subject_name: string;
+    career_name: string;
+    year_number: number;
+  }>(
+    `
+      SELECT
+        questions.id,
+        questions.type,
+        questions.statement,
+        questions.content,
+        questions.ocr_text,
+        subjects.id AS subject_id,
+        subjects.slug AS subject_slug,
+        subjects.name AS subject_name,
+        subjects.career_name,
+        subjects.year_number
+      FROM questions
+      INNER JOIN subjects ON subjects.id = questions.subject_id
+      ${whereClause}
+      ORDER BY subjects.year_number ASC, subjects.name ASC, questions.created_at ASC
+    `,
+    values
+  );
+
+  return result.rows.map(mapRowToQuestion);
+}
+
+export async function getQuestions(filters?: { subjectSlug?: string; yearNumber?: number }) {
+  return listQuestionsInternal(filters);
+}
+
+export async function listSubjects() {
+  const result = await pool.query<{
+    id: string;
+    slug: string;
+    name: string;
+    career_name: string;
+    year_number: number;
+  }>(
+    `
+      SELECT id, slug, name, career_name, year_number
+      FROM subjects
+      WHERE is_public = TRUE
+      ORDER BY year_number ASC, name ASC
+    `
+  );
+
+  return result.rows.map(toSubjectSummary);
 }
 
 export async function createQuestion(input: QuestionInput) {
@@ -140,29 +268,127 @@ export async function createQuestion(input: QuestionInput) {
     throw new Error(validationError);
   }
 
-  const questions = await readQuestions();
-  const question = { ...input, id: input.id?.trim() || makeId() } as Question;
-  questions.push(question);
-  await writeQuestions(questions);
-  return question;
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const subject = await resolveSubject(client, input);
+    const questionId = input.id?.trim() || makeId();
+    const inserted = await client.query<{
+      id: string;
+      type: Question["type"];
+      statement: string;
+      content: Record<string, unknown>;
+      ocr_text: string | null;
+      subject_id: string;
+      subject_slug: string;
+      subject_name: string;
+      career_name: string;
+      year_number: number;
+    }>(
+      `
+        INSERT INTO questions (id, subject_id, type, statement, content, ocr_text)
+        VALUES ($1, $2, $3, $4, $5::jsonb, $6)
+        RETURNING
+          id,
+          type,
+          statement,
+          content,
+          ocr_text,
+          $2 AS subject_id,
+          $7 AS subject_slug,
+          $8 AS subject_name,
+          $9 AS career_name,
+          $10 AS year_number
+      `,
+      [
+        questionId,
+        subject.id,
+        input.type,
+        input.statement,
+        JSON.stringify(serializeQuestionContent(input)),
+        input.ocrText ?? null,
+        subject.slug,
+        subject.name,
+        subject.career_name,
+        subject.year_number
+      ]
+    );
+    await client.query("COMMIT");
+    return mapRowToQuestion(inserted.rows[0]);
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 export async function createQuestionsBulk(inputs: QuestionInput[]) {
-  const questions = await readQuestions();
-  const created: Question[] = [];
+  const client = await pool.connect();
+  const created: QuestionRecord[] = [];
 
-  for (const input of inputs) {
-    const validationError = validateQuestion(input);
-    if (validationError) {
-      throw new Error(validationError);
+  try {
+    await client.query("BEGIN");
+
+    for (const input of inputs) {
+      const validationError = validateQuestion(input);
+      if (validationError) {
+        throw new Error(validationError);
+      }
+
+      const subject = await resolveSubject(client, input);
+      const inserted = await client.query<{
+        id: string;
+        type: Question["type"];
+        statement: string;
+        content: Record<string, unknown>;
+        ocr_text: string | null;
+        subject_id: string;
+        subject_slug: string;
+        subject_name: string;
+        career_name: string;
+        year_number: number;
+      }>(
+        `
+          INSERT INTO questions (id, subject_id, type, statement, content, ocr_text)
+          VALUES ($1, $2, $3, $4, $5::jsonb, $6)
+          RETURNING
+            id,
+            type,
+            statement,
+            content,
+            ocr_text,
+            $2 AS subject_id,
+            $7 AS subject_slug,
+            $8 AS subject_name,
+            $9 AS career_name,
+            $10 AS year_number
+        `,
+        [
+          input.id?.trim() || makeId(),
+          subject.id,
+          input.type,
+          input.statement,
+          JSON.stringify(serializeQuestionContent(input)),
+          input.ocrText ?? null,
+          subject.slug,
+          subject.name,
+          subject.career_name,
+          subject.year_number
+        ]
+      );
+
+      created.push(mapRowToQuestion(inserted.rows[0]));
     }
-    const question = { ...input, id: input.id?.trim() || makeId() } as Question;
-    questions.push(question);
-    created.push(question);
-  }
 
-  await writeQuestions(questions);
-  return created;
+    await client.query("COMMIT");
+    return created;
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 export async function updateQuestion(id: string, input: QuestionInput) {
@@ -171,25 +397,76 @@ export async function updateQuestion(id: string, input: QuestionInput) {
     throw new Error(validationError);
   }
 
-  const questions = await readQuestions();
-  const index = questions.findIndex((question) => question.id === id);
-  if (index === -1) {
-    return null;
-  }
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
 
-  const question = { ...input, id } as Question;
-  questions[index] = question;
-  await writeQuestions(questions);
-  return question;
+    const exists = await client.query<{ id: string }>("SELECT id FROM questions WHERE id = $1 LIMIT 1", [id]);
+    if (!exists.rows[0]) {
+      await client.query("ROLLBACK");
+      return null;
+    }
+
+    const subject = await resolveSubject(client, input);
+    const updated = await client.query<{
+      id: string;
+      type: Question["type"];
+      statement: string;
+      content: Record<string, unknown>;
+      ocr_text: string | null;
+      subject_id: string;
+      subject_slug: string;
+      subject_name: string;
+      career_name: string;
+      year_number: number;
+    }>(
+      `
+        UPDATE questions
+        SET
+          subject_id = $2,
+          type = $3,
+          statement = $4,
+          content = $5::jsonb,
+          ocr_text = $6,
+          updated_at = NOW()
+        WHERE id = $1
+        RETURNING
+          id,
+          type,
+          statement,
+          content,
+          ocr_text,
+          $2 AS subject_id,
+          $7 AS subject_slug,
+          $8 AS subject_name,
+          $9 AS career_name,
+          $10 AS year_number
+      `,
+      [
+        id,
+        subject.id,
+        input.type,
+        input.statement,
+        JSON.stringify(serializeQuestionContent(input)),
+        input.ocrText ?? null,
+        subject.slug,
+        subject.name,
+        subject.career_name,
+        subject.year_number
+      ]
+    );
+
+    await client.query("COMMIT");
+    return mapRowToQuestion(updated.rows[0]);
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 export async function deleteQuestion(id: string) {
-  const questions = await readQuestions();
-  const nextQuestions = questions.filter((question) => question.id !== id);
-  if (nextQuestions.length === questions.length) {
-    return false;
-  }
-
-  await writeQuestions(nextQuestions);
-  return true;
+  const result = await pool.query("DELETE FROM questions WHERE id = $1", [id]);
+  return (result.rowCount ?? 0) > 0;
 }

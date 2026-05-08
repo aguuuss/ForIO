@@ -2,9 +2,10 @@ import "./env.js";
 import cors from "cors";
 import express from "express";
 import multer from "multer";
+import { initializeDatabase } from "./db.js";
 import { createOcrProvider, getOcrStatus } from "./ocrProvider.js";
 import { parseQuestionFromOcr } from "./parseQuestion.js";
-import { createQuestion, createQuestionsBulk, deleteQuestion, getQuestions, updateQuestion } from "./store.js";
+import { createQuestion, createQuestionsBulk, deleteQuestion, getQuestions, listSubjects, updateQuestion } from "./store.js";
 
 const app = express();
 const port = Number(process.env.PORT) || 4000;
@@ -19,9 +20,23 @@ const upload = multer({
 app.use(cors());
 app.use(express.json({ limit: "2mb" }));
 
-app.get("/api/questions", async (_req, res, next) => {
+app.get("/api/questions", async (req, res, next) => {
   try {
-    res.json(await getQuestions());
+    const yearNumber = typeof req.query.yearNumber === "string" ? Number(req.query.yearNumber) : undefined;
+    res.json(
+      await getQuestions({
+        subjectSlug: typeof req.query.subjectSlug === "string" ? req.query.subjectSlug : undefined,
+        yearNumber: Number.isFinite(yearNumber) ? yearNumber : undefined
+      })
+    );
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.get("/api/subjects", async (_req, res, next) => {
+  try {
+    res.json(await listSubjects());
   } catch (error) {
     next(error);
   }
@@ -133,6 +148,13 @@ app.use((error: unknown, _req: express.Request, res: express.Response, _next: ex
   res.status(500).json({ message: "Error interno del servidor." });
 });
 
-app.listen(port, () => {
-  console.log(`API lista en http://localhost:${port}`);
-});
+initializeDatabase()
+  .then(() => {
+    app.listen(port, () => {
+      console.log(`API lista en http://localhost:${port}`);
+    });
+  })
+  .catch((error) => {
+    console.error("No se pudo inicializar la base de datos.", error);
+    process.exit(1);
+  });
