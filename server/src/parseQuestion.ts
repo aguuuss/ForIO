@@ -59,6 +59,11 @@ function detectOptionLines(lines: string[]) {
   return options.filter(Boolean);
 }
 
+function detectInlineChoiceLines(lines: string[]) {
+  const inlineChoicePattern = /\b([A-Da-d])[\).:-]\s+.+/;
+  return lines.filter((line) => inlineChoicePattern.test(line));
+}
+
 function isOptionLine(line: string) {
   return optionPattern.test(line) || optionMarkerPattern.test(line);
 }
@@ -248,6 +253,24 @@ function makeTableSuggestion(text: string, lines: string[]): QuestionInput {
   };
 }
 
+function hasDenseTableSignals(lines: string[], text: string) {
+  const joined = [text, ...lines].join(" ");
+  const explicitTableWords = /tabla|celda|cuadro|fila|filas|columna|columnas/i.test(joined);
+  const simplexStructureWords = /vector base|var\.?base|coeficientes de var\.?base|cj[-\s]?zj|zj[-\s]?cj|renglon|rengl[oó]n|restricci[oó]n\s*\d/i.test(joined);
+  const bracketCount = (joined.match(/\[[^\]]+\]/g) ?? []).length;
+  const numericGridLines = lines.filter((line) => /(\s{2,}|\t)/.test(line) && /\d/.test(line)).length;
+  const manyShortTokensLines = lines.filter((line) => line.split(/\s+/).length >= 4 && line.split(/\s+/).every((token) => token.length <= 12)).length;
+
+  return explicitTableWords || simplexStructureWords || bracketCount >= 2 || numericGridLines >= 2 || manyShortTokensLines >= 2;
+}
+
+function hasStrongMultipleChoiceSignals(promptLines: string[]) {
+  const optionLines = detectOptionLines(promptLines);
+  const inlineChoiceLines = detectInlineChoiceLines(promptLines);
+  const selectionHeader = promptLines.some((line) => /^seleccione una:?$/i.test(line) || /^marque una:?$/i.test(line));
+  return optionLines.length >= 2 || inlineChoiceLines.length >= 2 || (selectionHeader && (optionLines.length >= 1 || inlineChoiceLines.length >= 1));
+}
+
 export function parseQuestionFromOcr(text: string): QuestionInput {
   const lines = text
     .split(/\r?\n/)
@@ -257,10 +280,12 @@ export function parseQuestionFromOcr(text: string): QuestionInput {
   const { promptLines, correctLines } = splitCorrectSection(lines);
   const bankOptions = detectBankOptions(promptLines);
   const hasManyBankOptions = bankOptions.length >= 4;
-  const hasMultipleChoiceMarkers = promptLines.some((line) => isOptionLine(line));
+  const hasMultipleChoiceMarkers = hasStrongMultipleChoiceSignals(promptLines);
   const hasBracketedCorrectTable = correctLines.some((line) => /\[[^\]]+\]/.test(line));
+  const strongTableSignals = hasDenseTableSignals(lines, text);
+  const mentionsSimplexOnly = /simplex|slack|by\b/i.test(text);
   const shouldBeTable =
-    (hasBracketedCorrectTable || /tabla|simplex|celda|cuadro|fila|columna|vector base|slack|by\b|var\.?base|coeficientes de var\.?base/i.test(text)) &&
+    (hasBracketedCorrectTable || strongTableSignals || (mentionsSimplexOnly && !hasMultipleChoiceMarkers && bankOptions.length <= 2)) &&
     !hasMultipleChoiceMarkers &&
     !/supuestos|proporcionalidad|aditividad|divisibilidad|certidumbre|no negatividad/i.test(promptLines.join(" "));
   const shouldBeDrag =

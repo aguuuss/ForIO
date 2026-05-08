@@ -9,7 +9,8 @@
     "start": "node dist/index.js",
     "restore-latest": "node ./scripts/restore-latest.mjs",
     "backup": "node ./scripts/create-backup.mjs",
-    "seed-db": "node ./scripts/seed-db.mjs"
+    "seed-db": "node ./scripts/seed-db.mjs",
+    "init-admin": "node ./scripts/init-admin.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-textract": "^3.723.0",

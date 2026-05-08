@@ -45,6 +45,14 @@ INITIAL_ADMIN_DISPLAY_NAME=Administrador
 
 Si existe `INITIAL_ADMIN_EMAIL`, el arranque promueve esa cuenta a `admin active`. Si además no existe todavía y definís `INITIAL_ADMIN_PASSWORD`, la crea automáticamente.
 
+También podés inicializar o resetear el admin manualmente con un script explícito:
+
+```bash
+npm run init-admin --workspace server -- admin@tudominio.com una-clave-segura "Administrador"
+```
+
+Si no pasás argumentos, toma `INITIAL_ADMIN_EMAIL`, `INITIAL_ADMIN_PASSWORD` e `INITIAL_ADMIN_DISPLAY_NAME` desde el `.env` raíz.
+
 ## Base de datos local
 
 Levanta Postgres con Docker:
@@ -98,6 +106,7 @@ npm run dev
 npm run build
 npm run start
 npm run seed-db --workspace server
+npm run init-admin --workspace server -- admin@tudominio.com una-clave-segura "Administrador"
 ```
 
 Tambien se pueden correr por separado:

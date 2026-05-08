@@ -1,20 +1,32 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { DragEvent } from "react";
 import {
+  ArrowRight,
   ArrowUp,
   ArrowDown,
+  BarChart3,
+  BookOpen,
+  CalendarDays,
   CheckCircle2,
   ClipboardList,
   ChevronRight,
+  Clock3,
   FileImage,
   GraduationCap,
+  HelpCircle,
   Layers3,
+  LifeBuoy,
+  LogOut,
   Pencil,
   Plus,
   RotateCcw,
   Save,
+  ShieldCheck,
+  Sparkles,
   Trash2,
   Upload,
+  UserRound,
+  Users,
   Wand2,
   XCircle
 } from "lucide-react";
@@ -132,13 +144,13 @@ function normalizeQuestionInput(question: QuestionInput): QuestionInput {
   }
 
   return {
-      ...question,
-      draggableOptions: cleanList([
-        ...question.draggableOptions,
-        ...tableBlankCells(question.table).flatMap((cell) => [cell.correctAnswer ?? "", ...(cell.acceptedAnswers ?? [])])
-      ])
-    };
-  }
+    ...question,
+    draggableOptions: cleanList([
+      ...question.draggableOptions,
+      ...tableBlankCells(question.table).flatMap((cell) => [cell.correctAnswer ?? "", ...(cell.acceptedAnswers ?? [])])
+    ])
+  };
+}
 
 type ImportDraft = OcrUploadResult & {
   id: string;
@@ -187,6 +199,14 @@ function buildSubjectPath(subject: Pick<SubjectSummary, "slug" | "yearNumber">) 
 function parseYearSlug(raw: string) {
   const match = raw.trim().match(/^(\d+)/);
   return match ? Number(match[1]) : null;
+}
+
+function formatDateLabel(value: string) {
+  return new Intl.DateTimeFormat("es-AR", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric"
+  }).format(new Date(value));
 }
 
 function parsePath(pathname: string): PublicRoute {
@@ -320,19 +340,30 @@ export default function App() {
     }
   }
 
+  const shellTone = route.kind === "auth" ? "shell-auth" : route.kind === "admin" || route.kind === "admin-import" ? "shell-admin" : "";
+  const showFooter = !loading && !error;
+  const topbarContext =
+    selectedSubject && (route.kind === "practice" || route.kind === "exam")
+      ? `${route.kind === "exam" ? "Examen" : "Práctica"}: ${selectedSubject.name}`
+      : null;
+
   return (
-    <div className="app-shell">
+    <div className={`app-shell ${shellTone}`.trim()}>
       <header className="topbar">
-        <button className="brand" type="button" onClick={() => navigate("/")}>
-          <ClipboardList size={22} />
-          ForIO
-        </button>
-        <nav>
+        <div className="topbar-left">
+          <button className="brand" type="button" onClick={() => navigate("/")}>
+            <ClipboardList size={22} />
+            <span>ForIO</span>
+          </button>
+          {topbarContext ? <span className="topbar-context">{topbarContext}</span> : null}
+        </div>
+
+        <nav className="topbar-nav">
           <button className={route.kind === "home" ? "active" : ""} type="button" onClick={() => navigate("/")}>
             Catalogo
           </button>
           <button
-            className={`${route.kind === "practice" ? "active" : ""}`}
+            className={route.kind === "practice" ? "active" : ""}
             disabled={!selectedSubject}
             type="button"
             onClick={() => selectedSubject && navigate(buildSubjectPath(selectedSubject))}
@@ -345,25 +376,40 @@ export default function App() {
             type="button"
             onClick={() => selectedSubject && navigate(`${buildSubjectPath(selectedSubject)}/exam`)}
           >
-            <GraduationCap size={16} />
             Examen
           </button>
           <button className={route.kind === "admin" ? "active" : ""} type="button" onClick={() => navigate("/admin")}>
             Admin
           </button>
-          <button className={route.kind === "admin-import" ? "active" : ""} type="button" onClick={() => navigate("/admin/import")}>
-            Importar
+        </nav>
+
+        <div className="topbar-actions">
+          <button className="support-link" type="button">
+            <HelpCircle size={18} />
+            Support
           </button>
           {!authUser ? (
-            <button className={route.kind === "auth" ? "active" : ""} type="button" onClick={() => navigate("/auth")}>
+            <button className={`session-button ${route.kind === "auth" ? "active" : ""}`} type="button" onClick={() => navigate("/auth")}>
               Ingresar
             </button>
           ) : (
-            <button type="button" onClick={handleLogout}>
-              {authUser.displayName} · {authUser.role}
-            </button>
+            <>
+              <div className="session-pill">
+                <span className="session-avatar">{authUser.displayName.slice(0, 1).toUpperCase()}</span>
+                <div>
+                  <strong>{authUser.displayName}</strong>
+                  <span>
+                    {authUser.role} · {authUser.status}
+                  </span>
+                </div>
+              </div>
+              <button className="support-link" type="button" onClick={handleLogout}>
+                <LogOut size={18} />
+                Salir
+              </button>
+            </>
           )}
-        </nav>
+        </div>
       </header>
 
       {loading ? <main className="main">Cargando preguntas...</main> : null}
@@ -420,7 +466,27 @@ export default function App() {
       {!loading && !error && (route.kind === "admin" || route.kind === "admin-import") && authUser?.status === "pending" ? (
         <PendingAccessPage />
       ) : null}
+      {showFooter ? <AppFooter /> : null}
     </div>
+  );
+}
+
+function AppFooter() {
+  return (
+    <footer className="app-footer">
+      <div className="app-footer-inner">
+        <div>
+          <strong>ForIO</strong>
+          <p>© 2026 Universidad Tecnológica Nacional. Plataforma pública para práctica, examen y administración académica.</p>
+        </div>
+        <div className="app-footer-links">
+          <span>Privacidad</span>
+          <span>Términos de uso</span>
+          <span>Soporte técnico</span>
+          <span>UTN institucional</span>
+        </div>
+      </div>
+    </footer>
   );
 }
 
@@ -492,6 +558,9 @@ function SubjectHero({
           {yearLabel(subject.yearNumber)} · {questionsCount} preguntas disponibles · {modeLabel}
         </p>
       </div>
+      <div className="subject-hero-mark">
+        <GraduationCap size={72} />
+      </div>
     </section>
   );
 }
@@ -522,6 +591,8 @@ function CatalogPage({
   }, [questions]);
 
   const orderedYears = Array.from(subjectsByYear.keys()).sort((a, b) => a - b);
+  const totalYears = orderedYears.length;
+  const totalQuestions = questions.length;
 
   return (
     <main className="main catalog-page">
@@ -542,41 +613,67 @@ function CatalogPage({
           <p>Entrá al admin para crear la primera materia pública.</p>
         </section>
       ) : (
-        orderedYears.map((year) => (
-          <section className="catalog-year-block" key={year}>
-            <div className="catalog-year-head">
-              <div>
-                <span className="year-chip">{yearLabel(year)}</span>
-                <h2>Materias disponibles</h2>
+        <>
+          {orderedYears.map((year) => (
+            <section className="catalog-year-block" key={year}>
+              <div className="catalog-year-head">
+                <div>
+                  <span className="year-chip">{yearLabel(year)}</span>
+                  <h2>Materias disponibles</h2>
+                </div>
               </div>
-            </div>
-            <div className="subject-grid">
-              {(subjectsByYear.get(year) ?? []).map((subject) => {
-                const count = questionCountBySubject[subject.slug] ?? 0;
-                return (
-                  <article className="subject-card" key={subject.id}>
-                    <div className="subject-card-top">
-                      <span className="type-pill">{subject.careerName}</span>
-                      <strong>{count} preguntas</strong>
-                    </div>
-                    <h3>{subject.name}</h3>
-                    <p>Ruta pública lista para compartir y seguir cargando contenido sin mezclar materias.</p>
-                    <div className="subject-card-actions">
-                      <button className="primary-button" type="button" onClick={() => navigate(buildSubjectPath(subject))}>
-                        Practicar
-                        <ChevronRight size={16} />
-                      </button>
-                      <button className="ghost-button" type="button" onClick={() => navigate(`${buildSubjectPath(subject)}/exam`)}>
-                        <GraduationCap size={16} />
-                        Examen
-                      </button>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
+              <div className="subject-grid">
+                {(subjectsByYear.get(year) ?? []).map((subject) => {
+                  const count = questionCountBySubject[subject.slug] ?? 0;
+                  return (
+                    <article className="subject-card" key={subject.id}>
+                      <div className="subject-card-top">
+                        <span className="type-pill">{subject.careerName}</span>
+                        <strong>{count} preguntas</strong>
+                      </div>
+                      <h3>{subject.name}</h3>
+                      <p>Ruta pública lista para compartir y seguir cargando contenido sin mezclar materias.</p>
+                      <div className="subject-card-actions">
+                        <button className="primary-button" type="button" onClick={() => navigate(buildSubjectPath(subject))}>
+                          Practicar
+                          <ChevronRight size={16} />
+                        </button>
+                        <button className="ghost-button" type="button" onClick={() => navigate(`${buildSubjectPath(subject)}/exam`)}>
+                          <GraduationCap size={16} />
+                          Examen
+                        </button>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            </section>
+          ))}
+
+          <section className="catalog-stats-grid">
+            <article className="metric-card metric-card-dark">
+              <BarChart3 size={28} />
+              <div>
+                <strong>{totalQuestions}</strong>
+                <span>preguntas públicas</span>
+              </div>
+            </article>
+            <article className="metric-card metric-card-light">
+              <Users size={28} />
+              <div>
+                <strong>{subjects.length}</strong>
+                <span>materias activas</span>
+              </div>
+            </article>
+            <article className="metric-card metric-card-soft">
+              <BookOpen size={28} />
+              <div>
+                <strong>{totalYears}</strong>
+                <span>años con catálogo</span>
+              </div>
+            </article>
           </section>
-        ))
+        </>
       )}
     </main>
   );
@@ -670,7 +767,12 @@ function AuthPage({
         {message ? <p className="form-message">{message}</p> : null}
         <button className="primary-button" disabled={busy} type="button" onClick={submit}>
           {mode === "login" ? "Ingresar" : "Crear cuenta"}
+          <ArrowRight size={18} />
         </button>
+        <div className="auth-support">
+          <LifeBuoy size={18} />
+          <span>¿Necesitás ayuda? Contactar soporte</span>
+        </div>
       </section>
     </main>
   );
@@ -866,69 +968,99 @@ function ExamPage({ questions, subject }: { questions: Question[]; subject: Subj
   return (
     <main className="main">
       <SubjectHero modeLabel="Modo examen" questionsCount={questions.length} subject={subject} />
-      <section className="quiz-card">
-        <div className="exam-progress-bar">
-          <div className="exam-progress-fill" style={{ width: `${progress}%` }} />
-        </div>
-        <div className="quiz-meta">
-          <span>
-            Pregunta {index + 1} de {total}
-          </span>
-          <span className="exam-mode-badge">
-            <GraduationCap size={14} />
-            Modo Examen
-          </span>
-        </div>
-
-        <h1>{question.statement}</h1>
-
-        {question.type === "multiple_choice" ? (
-          <div className="choices">
-            {question.options.map((option) => (
-              <button
-                className={`choice ${selected === option ? "selected" : ""}`}
-                disabled={checked !== null}
-                key={option}
-                type="button"
-                onClick={() => setSelected(option)}
-              >
-                {option}
-              </button>
-            ))}
+      <section className="quiz-layout">
+        <article className="quiz-card quiz-stage">
+          <div className="exam-progress-bar">
+            <div className="exam-progress-fill" style={{ width: `${progress}%` }} />
           </div>
-        ) : question.type === "drag_and_drop" ? (
-          <DragDropAnswer
-            key={question.id}
-            textParts={question.textParts}
-            options={question.draggableOptions}
-            disabled={checked !== null}
-            onChange={setDndAnswers}
-          />
-        ) : (
-          <TableDragDropAnswer
-            key={question.id}
-            table={question.table}
-            options={question.draggableOptions}
-            disabled={checked !== null}
-            results={checked !== null ? currentTableResults : undefined}
-            onChange={setTableAnswers}
-          />
-        )}
+          <div className="quiz-meta">
+            <span>
+              Pregunta {index + 1} de {total}
+            </span>
+            <span className="exam-mode-badge">
+              <GraduationCap size={14} />
+              Modo Examen
+            </span>
+          </div>
 
-        {checked !== null ? <Feedback question={question} isCorrect={checked} /> : null}
+          <h1>{question.statement}</h1>
 
-        <div className="actions-row">
-          {checked === null ? (
-            <button className="primary-button" type="button" disabled={!canValidate} onClick={validate}>
-              <CheckCircle2 size={18} />
-              Validar
-            </button>
+          {question.type === "multiple_choice" ? (
+            <div className="choices">
+              {question.options.map((option) => (
+                <button
+                  className={`choice ${selected === option ? "selected" : ""}`}
+                  disabled={checked !== null}
+                  key={option}
+                  type="button"
+                  onClick={() => setSelected(option)}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+          ) : question.type === "drag_and_drop" ? (
+            <DragDropAnswer
+              key={question.id}
+              textParts={question.textParts}
+              options={question.draggableOptions}
+              disabled={checked !== null}
+              onChange={setDndAnswers}
+            />
           ) : (
-            <button className="primary-button" type="button" onClick={next}>
-              {index + 1 === total ? "Ver resultados" : "Siguiente"}
-            </button>
+            <TableDragDropAnswer
+              key={question.id}
+              table={question.table}
+              options={question.draggableOptions}
+              disabled={checked !== null}
+              results={checked !== null ? currentTableResults : undefined}
+              onChange={setTableAnswers}
+            />
           )}
-        </div>
+
+          {checked !== null ? <Feedback question={question} isCorrect={checked} /> : null}
+
+          <div className="actions-row">
+            {checked === null ? (
+              <button className="primary-button" type="button" disabled={!canValidate} onClick={validate}>
+                <CheckCircle2 size={18} />
+                Validar
+              </button>
+            ) : (
+              <button className="primary-button" type="button" onClick={next}>
+                {index + 1 === total ? "Ver resultados" : "Siguiente"}
+              </button>
+            )}
+          </div>
+        </article>
+
+        <aside className="quiz-sidebar">
+          <div className="summary-panel">
+            <h2>Resumen</h2>
+            <p>Mantené tu ritmo para completar la sesión.</p>
+            <div className="summary-grid">
+              {examQuestions.map((item, itemIndex) => (
+                <button
+                  className={`summary-step ${itemIndex === index ? "active" : collectedAnswers[itemIndex] ? "done" : ""}`}
+                  key={item.id}
+                  type="button"
+                  onClick={() => {
+                    if (collectedAnswers[itemIndex] || itemIndex === index) {
+                      setIndex(itemIndex);
+                      resetCurrentAnswer();
+                    }
+                  }}
+                >
+                  {itemIndex + 1}
+                </button>
+              ))}
+            </div>
+            <div className="summary-metric">
+              <span>Precisión parcial</span>
+              <strong>{index === 0 ? 0 : Math.round((collectedAnswers.filter(Boolean).length / index) * 100)}%</strong>
+            </div>
+          </div>
+        </aside>
       </section>
       <div className="practice-footer">
         <button className="ghost-button" type="button" onClick={goBack}>
@@ -1081,20 +1213,22 @@ function PracticePage({ questions, subject }: { questions: Question[]; subject: 
   }
 
   if (isFinished) {
-    return (
-      <main className="main result-panel">
+  return (
+    <main className="main result-panel">
         <h1>Resumen final</h1>
         <p className="score-big">
           {score}/{activeQuestions.length}
         </p>
         <p>Respondiste correctamente el {Math.round((score / activeQuestions.length) * 100)}%.</p>
-        <button className="primary-button" type="button" onClick={restart}>
-          <RotateCcw size={18} />
-          Reiniciar quiz
-        </button>
-        <button className="ghost-button" type="button" onClick={backToPicker}>
-          Elegir otras preguntas
-        </button>
+        <div className="result-actions">
+          <button className="primary-button" type="button" onClick={restart}>
+            <RotateCcw size={18} />
+            Reiniciar quiz
+          </button>
+          <button className="ghost-button" type="button" onClick={backToPicker}>
+            Elegir otras preguntas
+          </button>
+        </div>
       </main>
     );
   }
@@ -1109,63 +1243,100 @@ function PracticePage({ questions, subject }: { questions: Question[]; subject: 
   return (
     <main className="main">
       <SubjectHero modeLabel="Modo practica" questionsCount={questions.length} subject={subject} />
-      <section className="quiz-card">
-        <div className="quiz-meta">
-          <span>
-            Pregunta {index + 1} de {activeQuestions.length}
-          </span>
-          <strong>Puntaje: {score}</strong>
-        </div>
-
-        <h1>{question.statement}</h1>
-
-        {question.type === "multiple_choice" ? (
-          <div className="choices">
-            {question.options.map((option) => (
-              <button
-                className={`choice ${selected === option ? "selected" : ""}`}
-                disabled={checked !== null}
-                key={option}
-                type="button"
-                onClick={() => setSelected(option)}
-              >
-                {option}
-              </button>
-            ))}
+      <section className="quiz-layout">
+        <article className="quiz-card quiz-stage">
+          <div className="quiz-meta">
+            <span>
+              Pregunta {index + 1} de {activeQuestions.length}
+            </span>
+            <strong>Puntaje: {score}</strong>
           </div>
-        ) : question.type === "drag_and_drop" ? (
-          <DragDropAnswer
-            key={question.id}
-            textParts={question.textParts}
-            options={question.draggableOptions}
-            disabled={checked !== null}
-            onChange={setDndAnswers}
-          />
-        ) : (
-          <TableDragDropAnswer
-            key={question.id}
-            table={question.table}
-            options={question.draggableOptions}
-            disabled={checked !== null}
-            results={checked !== null ? tableResults : undefined}
-            onChange={setTableAnswers}
-          />
-        )}
 
-        {checked !== null ? <Feedback question={question} isCorrect={checked} /> : null}
+          <h1>{question.statement}</h1>
 
-        <div className="actions-row">
-          {checked === null ? (
-            <button className="primary-button" type="button" disabled={!canValidate} onClick={validate}>
-              <CheckCircle2 size={18} />
-              Validar
-            </button>
+          {question.type === "multiple_choice" ? (
+            <div className="choices">
+              {question.options.map((option) => (
+                <button
+                  className={`choice ${selected === option ? "selected" : ""}`}
+                  disabled={checked !== null}
+                  key={option}
+                  type="button"
+                  onClick={() => setSelected(option)}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+          ) : question.type === "drag_and_drop" ? (
+            <DragDropAnswer
+              key={question.id}
+              textParts={question.textParts}
+              options={question.draggableOptions}
+              disabled={checked !== null}
+              onChange={setDndAnswers}
+            />
           ) : (
-            <button className="primary-button" type="button" onClick={next}>
-              Siguiente
-            </button>
+            <TableDragDropAnswer
+              key={question.id}
+              table={question.table}
+              options={question.draggableOptions}
+              disabled={checked !== null}
+              results={checked !== null ? tableResults : undefined}
+              onChange={setTableAnswers}
+            />
           )}
-        </div>
+
+          {checked !== null ? <Feedback question={question} isCorrect={checked} /> : null}
+
+          <div className="actions-row">
+            {checked === null ? (
+              <button className="primary-button" type="button" disabled={!canValidate} onClick={validate}>
+                <CheckCircle2 size={18} />
+                Validar
+              </button>
+            ) : (
+              <button className="primary-button" type="button" onClick={next}>
+                Siguiente
+              </button>
+            )}
+          </div>
+        </article>
+
+        <aside className="quiz-sidebar">
+          <div className="summary-panel">
+            <h2>Resumen</h2>
+            <p>Seguimiento rápido de tu práctica actual.</p>
+            <div className="summary-grid">
+              {activeQuestions.map((item, itemIndex) => (
+                <span className={`summary-step ${itemIndex === index ? "active" : itemIndex < index ? "done" : ""}`} key={item.id}>
+                  {itemIndex + 1}
+                </span>
+              ))}
+            </div>
+            <div className="summary-progress-card">
+              <div>
+                <span>Precisión general</span>
+                <strong>
+                  {index === 0 ? 0 : Math.round((score / index) * 100)}%
+                </strong>
+              </div>
+              <div className="summary-progress-bar">
+                <span style={{ width: `${index === 0 ? 0 : Math.round((score / index) * 100)}%` }} />
+              </div>
+              <div className="summary-meta-row">
+                <span>
+                  <Clock3 size={16} />
+                  sesión activa
+                </span>
+                <span>
+                  <Sparkles size={16} />
+                  nivel práctica
+                </span>
+              </div>
+            </div>
+          </div>
+        </aside>
       </section>
       <div className="practice-footer">
         <button className="ghost-button" type="button" onClick={backToPicker}>
@@ -1223,35 +1394,35 @@ function PracticePicker({
   return (
     <main className="main practice-picker">
       <SubjectHero modeLabel="Modo practica" questionsCount={questions.length} subject={subject} />
-      <section className="quiz-card">
+      <section className="quiz-card picker-card">
         <div className="section-title">
           <h1>Elegir práctica</h1>
-          <strong>{selectedQuestions.length} seleccionada(s)</strong>
+          <strong className="list-count">{selectedQuestions.length} seleccionada(s)</strong>
         </div>
 
         <div className="picker-actions">
-          <button className="ghost-button" type="button" onClick={() => setSelectedIds(questions.map((question) => question.id))}>
+          <button className="filter-chip active" type="button" onClick={() => setSelectedIds(questions.map((question) => question.id))}>
             Todas
           </button>
-          <button className="ghost-button" type="button" onClick={() => setSelectedIds(questions.slice(-5).map((question) => question.id))}>
+          <button className="filter-chip" type="button" onClick={() => setSelectedIds(questions.slice(-5).map((question) => question.id))}>
             Últimas 5
           </button>
-          <button className="ghost-button" type="button" onClick={() => setSelectedIds(questions.slice(30).map((question) => question.id))}>
+          <button className="filter-chip" type="button" onClick={() => setSelectedIds(questions.slice(30).map((question) => question.id))}>
             Sin unidad 1
           </button>
-          <button className="ghost-button" type="button" onClick={() => setSelectedIds(questions.slice(60).map((question) => question.id))}>
+          <button className="filter-chip" type="button" onClick={() => setSelectedIds(questions.slice(60).map((question) => question.id))}>
             Sin unidades 1 y 2
           </button>
-          <button className="ghost-button" type="button" onClick={() => selectByType("multiple_choice")}>
+          <button className="filter-chip" type="button" onClick={() => selectByType("multiple_choice")}>
             Multiple choice
           </button>
-          <button className="ghost-button" type="button" onClick={() => selectByType("drag_and_drop")}>
+          <button className="filter-chip" type="button" onClick={() => selectByType("drag_and_drop")}>
             Frases
           </button>
-          <button className="ghost-button" type="button" onClick={() => selectByType("table_drag_and_drop")}>
+          <button className="filter-chip" type="button" onClick={() => selectByType("table_drag_and_drop")}>
             Tablas
           </button>
-          <button className="ghost-button" type="button" onClick={() => setSelectedIds([])}>
+          <button className="filter-chip" type="button" onClick={() => setSelectedIds([])}>
             Ninguna
           </button>
         </div>
@@ -1269,7 +1440,8 @@ function PracticePicker({
 
         <div className="actions-row">
           <button className="primary-button" type="button" disabled={selectedQuestions.length === 0} onClick={() => onStart(selectedQuestions)}>
-            Empezar práctica
+            Comenzar práctica
+            <ArrowRight size={18} />
           </button>
         </div>
       </section>
@@ -2215,6 +2387,16 @@ function UsersAdminPanel({ currentUser }: { currentUser: SessionUser }) {
   const [users, setUsers] = useState<AuthUser[] | null>(null);
   const [message, setMessage] = useState("");
 
+  const summary = useMemo(() => {
+    const list = users ?? [];
+    return {
+      total: list.length,
+      pending: list.filter((user) => user.status === "pending").length,
+      active: list.filter((user) => user.status === "active").length,
+      admins: list.filter((user) => user.role === "admin").length
+    };
+  }, [users]);
+
   async function loadUsers() {
     setUsers((current) => current);
     try {
@@ -2250,20 +2432,54 @@ function UsersAdminPanel({ currentUser }: { currentUser: SessionUser }) {
   }
 
   return (
-    <section className="list-panel">
+    <section className="list-panel users-panel">
       <div className="section-title">
         <h1>Usuarios</h1>
         <span className="list-count">{users?.length ?? 0}</span>
       </div>
+      <div className="admin-user-summary">
+        <article className="admin-user-stat">
+          <Users size={20} />
+          <div>
+            <strong>{summary.total}</strong>
+            <span>registrados</span>
+          </div>
+        </article>
+        <article className="admin-user-stat">
+          <Clock3 size={20} />
+          <div>
+            <strong>{summary.pending}</strong>
+            <span>pendientes</span>
+          </div>
+        </article>
+        <article className="admin-user-stat">
+          <ShieldCheck size={20} />
+          <div>
+            <strong>{summary.admins}</strong>
+            <span>admins</span>
+          </div>
+        </article>
+      </div>
       {message ? <p className="form-message">{message}</p> : null}
-      <div className="question-list">
+      <div className="question-list users-list">
         {(users ?? []).map((user) => (
-          <article className="question-item" key={user.id}>
-            <div>
-              <span className="type-pill">{user.role}</span>
-              <p className="question-subject-meta">{user.email}</p>
-              <h2>{user.displayName}</h2>
-              <p className="question-subject-meta">Estado: {user.status}</p>
+          <article className="question-item user-card" key={user.id}>
+            <div className="user-card-main">
+              <div className="user-card-head">
+                <span className="session-avatar">{user.displayName.slice(0, 1).toUpperCase()}</span>
+                <div>
+                  <h2>{user.displayName}</h2>
+                  <p className="question-subject-meta">{user.email}</p>
+                </div>
+              </div>
+              <div className="user-card-meta">
+                <span className={`status-badge ${user.status}`}>{user.status}</span>
+                <span className="type-pill">{user.role}</span>
+                <span className="user-meta-item">
+                  <CalendarDays size={14} />
+                  Alta {formatDateLabel(user.createdAt)}
+                </span>
+              </div>
             </div>
             <div className="admin-user-actions">
               <button
