@@ -1,4 +1,20 @@
 export type QuestionType = "multiple_choice" | "drag_and_drop" | "table_drag_and_drop";
+export type UserRole = "editor" | "admin";
+export type UserStatus = "pending" | "active";
+
+export type AuthUser = {
+  id: string;
+  email: string;
+  displayName: string;
+  role: UserRole;
+  status: UserStatus;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type SessionUser = AuthUser & {
+  sessionExpiresAt: string;
+};
 
 export type SubjectSummary = {
   id: string;

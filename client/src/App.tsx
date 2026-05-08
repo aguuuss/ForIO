@@ -22,10 +22,17 @@ import {
   createQuestion,
   createQuestionsBulk,
   deleteQuestion,
+  getAdminUsers,
+  getCurrentUser,
   getQuestions,
   getOcrStatus,
   getSubjects,
+  login,
+  logout,
   parseQuestionFromText,
+  register,
+  updateAdminUserRole,
+  updateAdminUserStatus,
   updateQuestion,
   uploadOcrImages
 } from "./api";
@@ -34,15 +41,19 @@ import type { OcrStatus } from "./api";
 import DragDropAnswer from "./components/DragDropAnswer";
 import TableDragDropAnswer, { cellKey } from "./components/TableDragDropAnswer";
 import type {
+  AuthUser,
   DragAndDropQuestion,
   DragTable,
   MultipleChoiceQuestion,
   Question,
   QuestionInput,
   QuestionType,
+  SessionUser,
   SubjectInput,
   SubjectSummary,
-  TableDragAndDropQuestion
+  TableDragAndDropQuestion,
+  UserRole,
+  UserStatus
 } from "./types/questions";
 
 const emptyMc: Omit<MultipleChoiceQuestion, "id"> = {
@@ -148,6 +159,7 @@ type SubjectDraft = Required<Pick<SubjectInput, "subjectSlug" | "subjectName" | 
 
 type PublicRoute =
   | { kind: "home" }
+  | { kind: "auth" }
   | { kind: "practice"; yearSlug: string; subjectSlug: string }
   | { kind: "exam"; yearSlug: string; subjectSlug: string }
   | { kind: "admin" }
@@ -184,6 +196,9 @@ function parsePath(pathname: string): PublicRoute {
   if (pathname === "/admin/import") {
     return { kind: "admin-import" };
   }
+  if (pathname === "/auth") {
+    return { kind: "auth" };
+  }
 
   const parts = pathname.split("/").filter(Boolean);
   if (parts.length === 0) {
@@ -214,6 +229,7 @@ function subjectDraftFromSubject(subject?: SubjectSummary | null): SubjectDraft 
 export default function App() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [subjects, setSubjects] = useState<SubjectSummary[]>([]);
+  const [authUser, setAuthUser] = useState<SessionUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [path, setPath] = useState(window.location.pathname);
@@ -223,9 +239,14 @@ export default function App() {
     setLoading(true);
     setError("");
     try {
-      const [nextQuestions, nextSubjects] = await Promise.all([getQuestionsWithRetry(), getSubjects()]);
+      const [nextQuestions, nextSubjects, currentUser] = await Promise.all([
+        getQuestionsWithRetry(),
+        getSubjects(),
+        getCurrentUser()
+      ]);
       setQuestions(nextQuestions);
       setSubjects(nextSubjects);
+      setAuthUser(currentUser.user);
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : "No se pudieron cargar las preguntas.");
     } finally {
@@ -256,6 +277,15 @@ export default function App() {
     return () => window.removeEventListener("popstate", onPopState);
   }, []);
 
+  useEffect(() => {
+    if (loading) {
+      return;
+    }
+    if ((route.kind === "admin" || route.kind === "admin-import") && !authUser) {
+      navigate("/auth");
+    }
+  }, [authUser, loading, route]);
+
   function navigate(nextPath: string) {
     window.history.pushState({}, "", nextPath);
     setPath(nextPath);
@@ -280,6 +310,15 @@ export default function App() {
   }, [questions, selectedSubject]);
 
   const adminSubjectDraft = selectedSubject ? subjectDraftFromSubject(selectedSubject) : subjectDraftFromSubject(subjects[0]);
+  const canAccessEditor = authUser?.status === "active" && (authUser.role === "editor" || authUser.role === "admin");
+
+  async function handleLogout() {
+    await logout();
+    setAuthUser(null);
+    if (route.kind === "admin" || route.kind === "admin-import") {
+      navigate("/");
+    }
+  }
 
   return (
     <div className="app-shell">
@@ -315,6 +354,15 @@ export default function App() {
           <button className={route.kind === "admin-import" ? "active" : ""} type="button" onClick={() => navigate("/admin/import")}>
             Importar
           </button>
+          {!authUser ? (
+            <button className={route.kind === "auth" ? "active" : ""} type="button" onClick={() => navigate("/auth")}>
+              Ingresar
+            </button>
+          ) : (
+            <button type="button" onClick={handleLogout}>
+              {authUser.displayName} · {authUser.role}
+            </button>
+          )}
         </nav>
       </header>
 
@@ -329,11 +377,27 @@ export default function App() {
           </button>
         </main>
       ) : null}
-      {!loading && !error && route.kind === "admin-import" ? (
+      {!loading && !error && route.kind === "auth" ? (
+        <AuthPage
+          currentUser={authUser}
+          onAuthenticated={(user) => {
+            setAuthUser(user);
+            navigate("/admin");
+          }}
+          onGoAdmin={() => navigate("/admin")}
+        />
+      ) : null}
+      {!loading && !error && route.kind === "admin-import" && canAccessEditor ? (
         <ImportPage onSaved={loadAppData} initialSubject={adminSubjectDraft} subjects={subjects} />
       ) : null}
-      {!loading && !error && route.kind === "admin" ? (
-        <AdminPage questions={questions} onChange={loadAppData} initialSubject={adminSubjectDraft} subjects={subjects} />
+      {!loading && !error && route.kind === "admin" && canAccessEditor ? (
+        <AdminPage
+          authUser={authUser}
+          questions={questions}
+          onChange={loadAppData}
+          initialSubject={adminSubjectDraft}
+          subjects={subjects}
+        />
       ) : null}
       {!loading && !error && route.kind === "exam" && selectedSubject ? (
         <ExamPage questions={visibleQuestions} subject={selectedSubject} />
@@ -352,6 +416,9 @@ export default function App() {
             Volver al catalogo
           </button>
         </main>
+      ) : null}
+      {!loading && !error && (route.kind === "admin" || route.kind === "admin-import") && authUser?.status === "pending" ? (
+        <PendingAccessPage />
       ) : null}
     </div>
   );
@@ -511,6 +578,111 @@ function CatalogPage({
           </section>
         ))
       )}
+    </main>
+  );
+}
+
+function AuthPage({
+  currentUser,
+  onAuthenticated,
+  onGoAdmin
+}: {
+  currentUser: SessionUser | null;
+  onAuthenticated: (user: SessionUser) => void;
+  onGoAdmin: () => void;
+}) {
+  const [mode, setMode] = useState<"login" | "register">("login");
+  const [displayName, setDisplayName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+
+  async function submit() {
+    setBusy(true);
+    setMessage("");
+    try {
+      if (mode === "register") {
+        const response = await register({ displayName, email, password });
+        setMode("login");
+        setMessage(response.message);
+      } else {
+        const response = await login({ email, password });
+        onAuthenticated(response.user);
+      }
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "No se pudo completar la operación.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (currentUser) {
+    return (
+      <main className="main auth-page">
+        <section className="quiz-card auth-card">
+          <h1>Ya iniciaste sesión</h1>
+          <p>
+            Entraste como <strong>{currentUser.displayName}</strong> con rol <strong>{currentUser.role}</strong>.
+          </p>
+          <p>{currentUser.status === "pending" ? "Tu cuenta está pendiente de aprobación." : "Ya podés entrar al panel de administración."}</p>
+          {currentUser.status === "active" ? (
+            <button className="primary-button" type="button" onClick={onGoAdmin}>
+              Ir al admin
+            </button>
+          ) : null}
+        </section>
+      </main>
+    );
+  }
+
+  return (
+    <main className="main auth-page">
+      <section className="quiz-card auth-card">
+        <div className="segmented">
+          <button className={mode === "login" ? "active" : ""} type="button" onClick={() => setMode("login")}>
+            Ingresar
+          </button>
+          <button className={mode === "register" ? "active" : ""} type="button" onClick={() => setMode("register")}>
+            Crear cuenta
+          </button>
+        </div>
+        <h1>{mode === "login" ? "Ingresar al panel" : "Crear cuenta de edición"}</h1>
+        <p className="helper-text">
+          {mode === "login"
+            ? "El catálogo sigue abierto para cualquiera. Ingresá solo si vas a cargar o editar contenido."
+            : "La cuenta se crea como editora pendiente. Un admin tiene que aprobarla antes de darte acceso."}
+        </p>
+        {mode === "register" ? (
+          <label>
+            Nombre para mostrar
+            <input value={displayName} onChange={(event) => setDisplayName(event.target.value)} />
+          </label>
+        ) : null}
+        <label>
+          Email
+          <input value={email} onChange={(event) => setEmail(event.target.value)} type="email" />
+        </label>
+        <label>
+          Contraseña
+          <input value={password} onChange={(event) => setPassword(event.target.value)} type="password" />
+        </label>
+        {message ? <p className="form-message">{message}</p> : null}
+        <button className="primary-button" disabled={busy} type="button" onClick={submit}>
+          {mode === "login" ? "Ingresar" : "Crear cuenta"}
+        </button>
+      </section>
+    </main>
+  );
+}
+
+function PendingAccessPage() {
+  return (
+    <main className="main auth-page">
+      <section className="quiz-card auth-card">
+        <h1>Cuenta pendiente de aprobación</h1>
+        <p>Ya tenés cuenta, pero todavía no podés cargar ni modificar contenido hasta que un admin la active.</p>
+      </section>
     </main>
   );
 }
@@ -2039,12 +2211,94 @@ function SubjectFieldsEditor({
   );
 }
 
+function UsersAdminPanel({ currentUser }: { currentUser: SessionUser }) {
+  const [users, setUsers] = useState<AuthUser[] | null>(null);
+  const [message, setMessage] = useState("");
+
+  async function loadUsers() {
+    setUsers((current) => current);
+    try {
+      const response = await getAdminUsers();
+      setUsers(response);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "No se pudieron cargar los usuarios.");
+    }
+  }
+
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  async function changeStatus(userId: string, status: UserStatus) {
+    try {
+      await updateAdminUserStatus(userId, status);
+      await loadUsers();
+      setMessage("Estado actualizado.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "No se pudo actualizar el estado.");
+    }
+  }
+
+  async function changeRole(userId: string, role: UserRole) {
+    try {
+      await updateAdminUserRole(userId, role);
+      await loadUsers();
+      setMessage("Rol actualizado.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "No se pudo actualizar el rol.");
+    }
+  }
+
+  return (
+    <section className="list-panel">
+      <div className="section-title">
+        <h1>Usuarios</h1>
+        <span className="list-count">{users?.length ?? 0}</span>
+      </div>
+      {message ? <p className="form-message">{message}</p> : null}
+      <div className="question-list">
+        {(users ?? []).map((user) => (
+          <article className="question-item" key={user.id}>
+            <div>
+              <span className="type-pill">{user.role}</span>
+              <p className="question-subject-meta">{user.email}</p>
+              <h2>{user.displayName}</h2>
+              <p className="question-subject-meta">Estado: {user.status}</p>
+            </div>
+            <div className="admin-user-actions">
+              <button
+                className="ghost-button"
+                disabled={user.id === currentUser.id}
+                type="button"
+                onClick={() => changeStatus(user.id, user.status === "active" ? "pending" : "active")}
+              >
+                {user.status === "active" ? "Pausar" : "Aprobar"}
+              </button>
+              <button
+                className="ghost-button"
+                disabled={user.id === currentUser.id}
+                type="button"
+                onClick={() => changeRole(user.id, user.role === "admin" ? "editor" : "admin")}
+              >
+                {user.role === "admin" ? "Bajar a editor" : "Subir a admin"}
+              </button>
+            </div>
+          </article>
+        ))}
+        {users?.length === 0 ? <p className="helper-text">Todavía no hay usuarios registrados.</p> : null}
+      </div>
+    </section>
+  );
+}
+
 function AdminPage({
+  authUser,
   questions,
   onChange,
   initialSubject,
   subjects
 }: {
+  authUser: SessionUser | null;
   questions: Question[];
   onChange: () => Promise<void>;
   initialSubject: SubjectDraft;
@@ -2233,38 +2487,43 @@ function AdminPage({
         </button>
       </section>
 
-      <section className="list-panel">
-        <div className="section-title">
-          <h1>Preguntas cargadas</h1>
-          <span className="list-count">{filteredQuestions.length}/{questions.length}</span>
-        </div>
-        <label className="search-box">
-          Buscar
-          <input value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder="Enunciado, tipo, opcion..." />
-        </label>
-        <div className="question-list">
-          {filteredQuestions.map((question) => (
-            <article className="question-item" key={question.id}>
-              <div>
-                <span className="type-pill">{questionTypeLabel(question.type)}</span>
-                <p className="question-subject-meta">
-                  {yearLabel(question.subject.yearNumber)} · {question.subject.name}
-                </p>
-                <h2>{question.statement}</h2>
-              </div>
-              <div className="item-actions">
-                <button className="icon-button" type="button" onClick={() => edit(question)} aria-label="Editar">
-                  <Pencil size={18} />
-                </button>
-                <button className="icon-button danger" type="button" onClick={() => remove(question.id)} aria-label="Eliminar">
-                  <Trash2 size={18} />
-                </button>
-              </div>
-            </article>
-          ))}
-          {filteredQuestions.length === 0 ? <p className="helper-text">No hay preguntas que coincidan con la busqueda.</p> : null}
-        </div>
-      </section>
+      <div className="admin-side-stack">
+        <section className="list-panel">
+          <div className="section-title">
+            <h1>Preguntas cargadas</h1>
+            <span className="list-count">{filteredQuestions.length}/{questions.length}</span>
+          </div>
+          <label className="search-box">
+            Buscar
+            <input value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder="Enunciado, tipo, opcion..." />
+          </label>
+          <div className="question-list">
+            {filteredQuestions.map((question) => (
+              <article className="question-item" key={question.id}>
+                <div>
+                  <span className="type-pill">{questionTypeLabel(question.type)}</span>
+                  <p className="question-subject-meta">
+                    {yearLabel(question.subject.yearNumber)} · {question.subject.name}
+                  </p>
+                  <h2>{question.statement}</h2>
+                </div>
+                <div className="item-actions">
+                  <button className="icon-button" type="button" onClick={() => edit(question)} aria-label="Editar">
+                    <Pencil size={18} />
+                  </button>
+                  {authUser?.role === "admin" ? (
+                    <button className="icon-button danger" type="button" onClick={() => remove(question.id)} aria-label="Eliminar">
+                      <Trash2 size={18} />
+                    </button>
+                  ) : null}
+                </div>
+              </article>
+            ))}
+            {filteredQuestions.length === 0 ? <p className="helper-text">No hay preguntas que coincidan con la busqueda.</p> : null}
+          </div>
+        </section>
+        {authUser?.role === "admin" ? <UsersAdminPanel currentUser={authUser} /> : null}
+      </div>
     </main>
   );
 }

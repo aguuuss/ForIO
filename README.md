@@ -33,6 +33,18 @@ cp .env.example .env
 
 La app ahora toma variables solo desde ese archivo raiz. `server/.env` ya no se usa.
 
+Para bootstrapear el primer administrador en un entorno nuevo, también podés definir:
+
+```bash
+AUTH_COOKIE_SECRET=change-this-in-production
+AUTH_SESSION_TTL_DAYS=30
+INITIAL_ADMIN_EMAIL=admin@tudominio.com
+INITIAL_ADMIN_PASSWORD=una-clave-segura
+INITIAL_ADMIN_DISPLAY_NAME=Administrador
+```
+
+Si existe `INITIAL_ADMIN_EMAIL`, el arranque promueve esa cuenta a `admin active`. Si además no existe todavía y definís `INITIAL_ADMIN_PASSWORD`, la crea automáticamente.
+
 ## Base de datos local
 
 Levanta Postgres con Docker:

@@ -507,6 +507,29 @@ h2 {
   grid-template-columns: minmax(0, 1fr) minmax(320px, 0.8fr);
 }
 
+.admin-side-stack {
+  display: grid;
+  gap: 24px;
+}
+
+.auth-page {
+  display: flex;
+  justify-content: center;
+}
+
+.auth-card {
+  display: grid;
+  gap: 16px;
+  max-width: 520px;
+  width: 100%;
+}
+
+.admin-user-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .import-layout {
   display: grid;
   gap: 22px;

@@ -1,4 +1,20 @@
 export type QuestionType = "multiple_choice" | "drag_and_drop" | "table_drag_and_drop";
+export type UserRole = "editor" | "admin";
+export type UserStatus = "pending" | "active";
+
+export type AuthUser = {
+  id: string;
+  email: string;
+  displayName: string;
+  role: UserRole;
+  status: UserStatus;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type SessionUser = AuthUser & {
+  sessionExpiresAt: string;
+};
 
 export type SubjectSummary = {
   id: string;
@@ -6,6 +22,8 @@ export type SubjectSummary = {
   name: string;
   careerName: string;
   yearNumber: number;
+  createdBy?: Pick<AuthUser, "id" | "displayName" | "email">;
+  updatedBy?: Pick<AuthUser, "id" | "displayName" | "email">;
 };
 
 export type SubjectInput = {
@@ -13,6 +31,7 @@ export type SubjectInput = {
   subjectName?: string;
   careerName?: string;
   yearNumber?: number;
+  actorUserId?: string;
 };
 
 export type TableCell = {
@@ -61,6 +80,8 @@ export type TableDragAndDropQuestion = {
 export type Question = MultipleChoiceQuestion | DragAndDropQuestion | TableDragAndDropQuestion;
 export type QuestionRecord = Question & {
   subject: SubjectSummary;
+  createdBy?: Pick<AuthUser, "id" | "displayName" | "email">;
+  updatedBy?: Pick<AuthUser, "id" | "displayName" | "email">;
 };
 
 export type QuestionInput =

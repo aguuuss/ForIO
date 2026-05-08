@@ -1,4 +1,4 @@
-import type { Question, QuestionInput, SubjectSummary } from "./types/questions";
+import type { AuthUser, Question, QuestionInput, SessionUser, SubjectSummary, UserRole, UserStatus } from "./types/questions";
 
 export type OcrUploadResult = {
   filename: string;
@@ -30,6 +30,7 @@ export type QuestionFilters = {
 
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
   const response = await fetch(url, {
+    credentials: "include",
     headers: { "Content-Type": "application/json" },
     ...options
   });
@@ -61,6 +62,48 @@ export function getQuestions(filters?: QuestionFilters) {
 
 export function getSubjects() {
   return request<SubjectSummary[]>("/api/subjects");
+}
+
+export function getCurrentUser() {
+  return request<{ user: SessionUser | null }>("/api/auth/me");
+}
+
+export function register(payload: { email: string; password: string; displayName: string }) {
+  return request<{ user: AuthUser; message: string }>("/api/auth/register", {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+}
+
+export function login(payload: { email: string; password: string }) {
+  return request<{ user: SessionUser }>("/api/auth/login", {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+}
+
+export function logout() {
+  return request<void>("/api/auth/logout", {
+    method: "POST"
+  });
+}
+
+export function getAdminUsers() {
+  return request<AuthUser[]>("/api/admin/users");
+}
+
+export function updateAdminUserStatus(id: string, status: UserStatus) {
+  return request<AuthUser>(`/api/admin/users/${id}/status`, {
+    method: "PATCH",
+    body: JSON.stringify({ status })
+  });
+}
+
+export function updateAdminUserRole(id: string, role: UserRole) {
+  return request<AuthUser>(`/api/admin/users/${id}/role`, {
+    method: "PATCH",
+    body: JSON.stringify({ role })
+  });
 }
 
 export function createQuestion(question: QuestionInput) {
@@ -99,6 +142,7 @@ export async function uploadOcrImages(files: File[]) {
   }
 
   const response = await fetch("/api/ocr/upload", {
+    credentials: "include",
     method: "POST",
     body: formData
   });

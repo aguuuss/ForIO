@@ -129,11 +129,11 @@ async function resolveSubject(client: PoolClient, input?: SubjectInput) {
     year_number: number;
   }>(
     `
-      INSERT INTO subjects (id, slug, name, career_name, year_number, is_public)
-      VALUES ($1, $2, $3, $4, $5, TRUE)
+      INSERT INTO subjects (id, slug, name, career_name, year_number, is_public, created_by, updated_by)
+      VALUES ($1, $2, $3, $4, $5, TRUE, $6, $6)
       RETURNING id, slug, name, career_name, year_number
     `,
-    [makeId(), slug, name, careerName, yearNumber]
+    [makeId(), slug, name, careerName, yearNumber, input?.actorUserId ?? null]
   );
 
   return inserted.rows[0];
@@ -286,8 +286,8 @@ export async function createQuestion(input: QuestionInput) {
       year_number: number;
     }>(
       `
-        INSERT INTO questions (id, subject_id, type, statement, content, ocr_text)
-        VALUES ($1, $2, $3, $4, $5::jsonb, $6)
+        INSERT INTO questions (id, subject_id, type, statement, content, ocr_text, created_by, updated_by)
+        VALUES ($1, $2, $3, $4, $5::jsonb, $6, $11, $11)
         RETURNING
           id,
           type,
@@ -310,7 +310,8 @@ export async function createQuestion(input: QuestionInput) {
         subject.slug,
         subject.name,
         subject.career_name,
-        subject.year_number
+        subject.year_number,
+        input.actorUserId ?? null
       ]
     );
     await client.query("COMMIT");
@@ -350,8 +351,8 @@ export async function createQuestionsBulk(inputs: QuestionInput[]) {
         year_number: number;
       }>(
         `
-          INSERT INTO questions (id, subject_id, type, statement, content, ocr_text)
-          VALUES ($1, $2, $3, $4, $5::jsonb, $6)
+          INSERT INTO questions (id, subject_id, type, statement, content, ocr_text, created_by, updated_by)
+          VALUES ($1, $2, $3, $4, $5::jsonb, $6, $11, $11)
           RETURNING
             id,
             type,
@@ -374,7 +375,8 @@ export async function createQuestionsBulk(inputs: QuestionInput[]) {
           subject.slug,
           subject.name,
           subject.career_name,
-          subject.year_number
+          subject.year_number,
+          input.actorUserId ?? null
         ]
       );
 
@@ -428,6 +430,7 @@ export async function updateQuestion(id: string, input: QuestionInput) {
           statement = $4,
           content = $5::jsonb,
           ocr_text = $6,
+          updated_by = $11,
           updated_at = NOW()
         WHERE id = $1
         RETURNING
@@ -452,7 +455,8 @@ export async function updateQuestion(id: string, input: QuestionInput) {
         subject.slug,
         subject.name,
         subject.career_name,
-        subject.year_number
+        subject.year_number,
+        input.actorUserId ?? null
       ]
     );
 
