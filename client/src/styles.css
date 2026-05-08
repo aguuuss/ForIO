@@ -921,3 +921,272 @@ small {
     flex-direction: column;
   }
 }
+
+/* ===== EXAM MODE ===== */
+
+.exam-nav-btn {
+  align-items: center;
+  display: inline-flex;
+  gap: 6px;
+}
+
+.exam-landing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.exam-start-card {
+  max-width: 560px;
+  text-align: center;
+}
+
+.exam-start-icon {
+  color: #2454d6;
+  margin-bottom: 8px;
+}
+
+.exam-start-desc {
+  color: #43516a;
+  font-size: 1rem;
+  line-height: 1.6;
+  margin: 0 0 18px;
+}
+
+.exam-rules {
+  background: #f0f4ff;
+  border-radius: 10px;
+  list-style: none;
+  margin: 0 0 28px;
+  padding: 16px 20px;
+  text-align: left;
+}
+
+.exam-rules li {
+  color: #43516a;
+  font-size: 0.95rem;
+  line-height: 1.7;
+  padding-left: 4px;
+}
+
+.exam-rules li::before {
+  content: "→ ";
+  color: #2454d6;
+  font-weight: 700;
+}
+
+.exam-start-btn {
+  font-size: 1.05rem;
+  gap: 10px;
+  padding: 14px 32px;
+}
+
+.exam-progress-bar {
+  background: #e3e7ef;
+  border-radius: 4px;
+  height: 5px;
+  margin-bottom: 18px;
+  overflow: hidden;
+  width: 100%;
+}
+
+.exam-progress-fill {
+  background: #2454d6;
+  border-radius: 4px;
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.exam-mode-badge {
+  align-items: center;
+  background: #edf1ff;
+  border-radius: 6px;
+  color: #2454d6;
+  display: inline-flex;
+  font-size: 0.8rem;
+  font-weight: 700;
+  gap: 5px;
+  padding: 4px 10px;
+}
+
+.exam-actions-row {
+  justify-content: space-between;
+}
+
+/* Results page */
+.exam-results-page {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.exam-results-header {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #e3e7ef;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 32px;
+  text-align: center;
+}
+
+.exam-score-badge {
+  align-items: center;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 28px 44px;
+}
+
+.exam-score-badge.passed {
+  background: #ecfdf5;
+  color: #059669;
+}
+
+.exam-score-badge.failed {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.exam-score-number {
+  font-size: 2.6rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.exam-score-pct {
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.exam-score-label {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.exam-results-stats {
+  display: flex;
+  gap: 24px;
+}
+
+.exam-stat {
+  align-items: center;
+  display: flex;
+  font-size: 0.95rem;
+  gap: 8px;
+}
+
+.exam-stat.correct {
+  color: #059669;
+}
+
+.exam-stat.incorrect {
+  color: #dc2626;
+}
+
+.exam-results-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* Review list */
+.exam-review-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.exam-review-list h2 {
+  color: #43516a;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  margin: 0 0 4px;
+  text-transform: uppercase;
+}
+
+.exam-review-item {
+  background: #ffffff;
+  border: 1.5px solid #e3e7ef;
+  border-left-width: 4px;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 18px;
+}
+
+.exam-review-item.review-correct {
+  border-left-color: #059669;
+}
+
+.exam-review-item.review-incorrect {
+  border-left-color: #dc2626;
+}
+
+.exam-review-header {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+}
+
+.exam-review-num {
+  background: #edf1f7;
+  border-radius: 6px;
+  color: #43516a;
+  font-size: 0.8rem;
+  font-weight: 800;
+  min-width: 28px;
+  padding: 2px 6px;
+  text-align: center;
+}
+
+.exam-review-status {
+  align-items: center;
+  display: inline-flex;
+  font-size: 0.85rem;
+  font-weight: 700;
+  gap: 5px;
+}
+
+.review-correct .exam-review-status {
+  color: #059669;
+}
+
+.review-incorrect .exam-review-status {
+  color: #dc2626;
+}
+
+.exam-review-statement {
+  color: #172033;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.exam-review-answers {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.exam-answer-row {
+  color: #43516a;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.exam-answer-row.correct-answer {
+  color: #059669;
+}
+
+.exam-answer-row.user-answer {
+  color: #dc2626;
+}

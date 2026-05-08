@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   ClipboardList,
   FileImage,
+  GraduationCap,
   Pencil,
   Plus,
   RotateCcw,
@@ -195,6 +196,10 @@ export default function App() {
           <button className={path === "/" ? "active" : ""} type="button" onClick={() => navigate("/")}>
             Practica
           </button>
+          <button className={`${path === "/exam" ? "active" : ""} exam-nav-btn`} type="button" onClick={() => navigate("/exam")}>
+            <GraduationCap size={16} />
+            Examen
+          </button>
           <button className={path === "/admin" ? "active" : ""} type="button" onClick={() => navigate("/admin")}>
             Admin
           </button>
@@ -221,8 +226,360 @@ export default function App() {
       {!loading && !error && path === "/admin" ? (
         <AdminPage questions={questions} onChange={loadQuestions} />
       ) : null}
-      {!loading && !error && path !== "/admin" && path !== "/admin/import" ? <PracticePage questions={questions} /> : null}
+      {!loading && !error && path === "/exam" ? (
+        <ExamPage questions={questions} />
+      ) : null}
+      {!loading && !error && path !== "/admin" && path !== "/admin/import" && path !== "/exam" ? <PracticePage questions={questions} /> : null}
     </div>
+  );
+}
+
+const EXAM_QUESTION_COUNT = 50;
+
+type ExamAnswer =
+  | { type: "multiple_choice"; selected: string }
+  | { type: "drag_and_drop"; answers: string[] }
+  | { type: "table_drag_and_drop"; answers: Record<string, string> };
+
+type ExamQuestionResult = {
+  question: Question;
+  answer: ExamAnswer | null;
+  isCorrect: boolean;
+  tableResults?: Record<string, boolean>;
+};
+
+function shuffleArray<T>(array: T[]): T[] {
+  const copy = [...array];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+function evaluateExamAnswer(question: Question, answer: ExamAnswer | null): { isCorrect: boolean; tableResults?: Record<string, boolean> } {
+  if (!answer) {
+    return { isCorrect: false };
+  }
+  if (question.type === "multiple_choice" && answer.type === "multiple_choice") {
+    return { isCorrect: answer.selected === question.correctAnswer };
+  }
+  if (question.type === "drag_and_drop" && answer.type === "drag_and_drop") {
+    return {
+      isCorrect: question.correctAnswers.every((correctAnswer, i) => answer.answers[i] === correctAnswer)
+    };
+  }
+  if (question.type === "table_drag_and_drop" && answer.type === "table_drag_and_drop") {
+    const tableResults = Object.fromEntries(
+      tableBlankCells(question.table).map((cell) => {
+        const key = cellKey(cell.row, cell.col);
+        return [key, isAcceptedTableAnswer(answer.answers[key], cell.correctAnswer, cell.acceptedAnswers)];
+      })
+    );
+    return { isCorrect: Object.values(tableResults).every(Boolean), tableResults };
+  }
+  return { isCorrect: false };
+}
+
+function ExamPage({ questions }: { questions: Question[] }) {
+  const [examQuestions, setExamQuestions] = useState<Question[] | null>(null);
+  const [index, setIndex] = useState(0);
+  const [collectedAnswers, setCollectedAnswers] = useState<(ExamAnswer | null)[]>([]);
+  const [results, setResults] = useState<ExamQuestionResult[] | null>(null);
+
+  const [selected, setSelected] = useState("");
+  const [dndAnswers, setDndAnswers] = useState<string[]>([]);
+  const [tableAnswers, setTableAnswers] = useState<Record<string, string>>({});
+  const [checked, setChecked] = useState<null | boolean>(null);
+  const [currentTableResults, setCurrentTableResults] = useState<Record<string, boolean>>({});
+
+  function resetCurrentAnswer() {
+    setSelected("");
+    setDndAnswers([]);
+    setTableAnswers({});
+    setChecked(null);
+    setCurrentTableResults({});
+  }
+
+  function startExam() {
+    const shuffled = shuffleArray(questions);
+    const picked = shuffled.slice(0, Math.min(EXAM_QUESTION_COUNT, shuffled.length));
+    setExamQuestions(picked);
+    setIndex(0);
+    setCollectedAnswers([]);
+    setResults(null);
+    resetCurrentAnswer();
+  }
+
+  function goBack() {
+    setExamQuestions(null);
+    setResults(null);
+    setIndex(0);
+    setCollectedAnswers([]);
+    resetCurrentAnswer();
+  }
+
+  function buildCurrentAnswer(question: Question): ExamAnswer | null {
+    if (question.type === "multiple_choice") {
+      return selected ? { type: "multiple_choice", selected } : null;
+    }
+    if (question.type === "drag_and_drop") {
+      return dndAnswers.length > 0 ? { type: "drag_and_drop", answers: dndAnswers } : null;
+    }
+    return Object.keys(tableAnswers).length > 0 ? { type: "table_drag_and_drop", answers: tableAnswers } : null;
+  }
+
+  function validate() {
+    if (!examQuestions) return;
+    const question = examQuestions[index];
+    const answer = buildCurrentAnswer(question);
+    const { isCorrect, tableResults } = evaluateExamAnswer(question, answer);
+    setChecked(isCorrect);
+    if (tableResults) {
+      setCurrentTableResults(tableResults);
+    }
+    setCollectedAnswers((current) => {
+      const next = [...current];
+      next[index] = answer;
+      return next;
+    });
+  }
+
+  function next() {
+    if (!examQuestions) return;
+    if (index + 1 >= examQuestions.length) {
+      const finalAnswers = collectedAnswers;
+      const examResults: ExamQuestionResult[] = examQuestions.map((question, i) => {
+        const ans = finalAnswers[i] ?? null;
+        const { isCorrect, tableResults } = evaluateExamAnswer(question, ans);
+        return { question, answer: ans, isCorrect, tableResults };
+      });
+      setResults(examResults);
+    } else {
+      setIndex((current) => current + 1);
+      resetCurrentAnswer();
+    }
+  }
+
+  if (questions.length === 0) {
+    return (
+      <main className="main empty-state">
+        <h1>No hay preguntas cargadas</h1>
+        <p>Entrá al admin para crear la primera.</p>
+      </main>
+    );
+  }
+
+  if (results) {
+    const score = results.filter((r) => r.isCorrect).length;
+    const total = results.length;
+    const pct = Math.round((score / total) * 100);
+    const passed = pct >= 60;
+
+    return (
+      <main className="main exam-results-page">
+        <section className="exam-results-header">
+          <div className={`exam-score-badge ${passed ? "passed" : "failed"}`}>
+            <GraduationCap size={36} />
+            <span className="exam-score-number">{score}/{total}</span>
+            <span className="exam-score-pct">{pct}%</span>
+            <span className="exam-score-label">{passed ? "Aprobado" : "Desaprobado"}</span>
+          </div>
+          <div className="exam-results-stats">
+            <div className="exam-stat correct">
+              <CheckCircle2 size={20} />
+              <span><strong>{score}</strong> correctas</span>
+            </div>
+            <div className="exam-stat incorrect">
+              <XCircle size={20} />
+              <span><strong>{total - score}</strong> incorrectas</span>
+            </div>
+          </div>
+          <div className="exam-results-actions">
+            <button className="primary-button" type="button" onClick={startExam}>
+              <RotateCcw size={18} />
+              Nuevo examen
+            </button>
+            <button className="ghost-button" type="button" onClick={goBack}>
+              Volver
+            </button>
+          </div>
+        </section>
+
+        <section className="exam-review-list">
+          <h2>Revisión de respuestas</h2>
+          {results.map((result, i) => (
+            <ExamResultItem key={result.question.id} index={i} result={result} />
+          ))}
+        </section>
+      </main>
+    );
+  }
+
+  if (!examQuestions) {
+    const count = Math.min(EXAM_QUESTION_COUNT, questions.length);
+    return (
+      <main className="main exam-landing">
+        <section className="quiz-card exam-start-card">
+          <div className="exam-start-icon">
+            <GraduationCap size={48} />
+          </div>
+          <h1>Modo Examen</h1>
+          <p className="exam-start-desc">
+            Se seleccionarán <strong>{count} preguntas aleatorias</strong> del banco de{" "}
+            <strong>{questions.length} preguntas</strong>.
+          </p>
+          <ul className="exam-rules">
+            <li>Respondé cada pregunta y validá con <strong>Validar</strong></li>
+            <li>Verás el resultado de cada respuesta antes de continuar</li>
+            <li>Al terminar verás tu puntaje final y la revisión completa</li>
+          </ul>
+          <button className="primary-button exam-start-btn" type="button" onClick={startExam}>
+            <GraduationCap size={20} />
+            Iniciar examen
+          </button>
+        </section>
+      </main>
+    );
+  }
+
+  const question = examQuestions[index];
+  const total = examQuestions.length;
+
+  const canValidate =
+    question.type === "multiple_choice"
+      ? Boolean(selected)
+      : question.type === "drag_and_drop"
+        ? dndAnswers.filter(Boolean).length === question.correctAnswers.length
+        : tableBlankCells(question.table).every((cell) => Boolean(tableAnswers[cellKey(cell.row, cell.col)]));
+
+  const progress = (index / total) * 100;
+
+  return (
+    <main className="main">
+      <section className="quiz-card">
+        <div className="exam-progress-bar">
+          <div className="exam-progress-fill" style={{ width: `${progress}%` }} />
+        </div>
+        <div className="quiz-meta">
+          <span>
+            Pregunta {index + 1} de {total}
+          </span>
+          <span className="exam-mode-badge">
+            <GraduationCap size={14} />
+            Modo Examen
+          </span>
+        </div>
+
+        <h1>{question.statement}</h1>
+
+        {question.type === "multiple_choice" ? (
+          <div className="choices">
+            {question.options.map((option) => (
+              <button
+                className={`choice ${selected === option ? "selected" : ""}`}
+                disabled={checked !== null}
+                key={option}
+                type="button"
+                onClick={() => setSelected(option)}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+        ) : question.type === "drag_and_drop" ? (
+          <DragDropAnswer
+            key={question.id}
+            textParts={question.textParts}
+            options={question.draggableOptions}
+            disabled={checked !== null}
+            onChange={setDndAnswers}
+          />
+        ) : (
+          <TableDragDropAnswer
+            key={question.id}
+            table={question.table}
+            options={question.draggableOptions}
+            disabled={checked !== null}
+            results={checked !== null ? currentTableResults : undefined}
+            onChange={setTableAnswers}
+          />
+        )}
+
+        {checked !== null ? <Feedback question={question} isCorrect={checked} /> : null}
+
+        <div className="actions-row">
+          {checked === null ? (
+            <button className="primary-button" type="button" disabled={!canValidate} onClick={validate}>
+              <CheckCircle2 size={18} />
+              Validar
+            </button>
+          ) : (
+            <button className="primary-button" type="button" onClick={next}>
+              {index + 1 === total ? "Ver resultados" : "Siguiente"}
+            </button>
+          )}
+        </div>
+      </section>
+      <div className="practice-footer">
+        <button className="ghost-button" type="button" onClick={goBack}>
+          Abandonar examen
+        </button>
+      </div>
+    </main>
+  );
+}
+
+function ExamResultItem({ index, result }: { index: number; result: ExamQuestionResult }) {
+  const { question, answer, isCorrect, tableResults } = result;
+
+  const correctText =
+    question.type === "multiple_choice"
+      ? question.correctAnswer
+      : question.type === "drag_and_drop"
+        ? question.correctAnswers.join(" / ")
+        : tableBlankCells(question.table)
+            .map((cell) => `(${cell.row + 1},${cell.col + 1}) ${[cell.correctAnswer, ...(cell.acceptedAnswers ?? [])].filter(Boolean).join(" o ")}`)
+            .join(" / ");
+
+  const userAnswerText =
+    answer === null
+      ? "Sin respuesta"
+      : answer.type === "multiple_choice"
+        ? answer.selected
+        : answer.type === "drag_and_drop"
+          ? answer.answers.join(" / ")
+          : tableBlankCells((question as TableDragAndDropQuestion).table)
+              .map((cell) => {
+                const key = cellKey(cell.row, cell.col);
+                const val = (answer as { type: "table_drag_and_drop"; answers: Record<string, string> }).answers[key];
+                const ok = tableResults?.[key];
+                return `(${cell.row + 1},${cell.col + 1}) ${val ?? "—"}${ok !== undefined ? (ok ? " ✓" : " ✗") : ""}`;
+              })
+              .join(" / ");
+
+  return (
+    <article className={`exam-review-item ${isCorrect ? "review-correct" : "review-incorrect"}`}>
+      <div className="exam-review-header">
+        <span className="exam-review-num">{index + 1}</span>
+        <span className="exam-review-status">
+          {isCorrect ? <CheckCircle2 size={18} /> : <XCircle size={18} />}
+          {isCorrect ? "Correcta" : "Incorrecta"}
+        </span>
+        <span className="type-pill">{questionTypeLabel(question.type)}</span>
+      </div>
+      <p className="exam-review-statement">{question.statement}</p>
+      <div className="exam-review-answers">
+        {!isCorrect && (
+          <span className="exam-answer-row user-answer">
+            <strong>Tu respuesta:</strong> {userAnswerText}
+          </span>
+        )}
+        <span className="exam-answer-row correct-answer">
+          <strong>Respuesta correcta:</strong> {correctText}
+        </span>
+      </div>
+    </article>
   );
 }
 
@@ -661,11 +1018,12 @@ function ImportPage({ onSaved }: { onSaved: () => Promise<void> }) {
     }
 
     if (result.parsedQuestion.type === "table_drag_and_drop") {
+      const tableQuestion = result.parsedQuestion as Omit<TableDragAndDropQuestion, "id">;
       setTableBuilder((current) => ({
         ...current,
-        statement: result.parsedQuestion.statement || current.statement,
-        table: result.parsedQuestion.table,
-        options: uniqueList([...current.options, ...result.parsedQuestion.draggableOptions])
+        statement: tableQuestion.statement || current.statement,
+        table: tableQuestion.table,
+        options: uniqueList([...current.options, ...tableQuestion.draggableOptions])
       }));
       return;
     }
