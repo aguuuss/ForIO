@@ -30,6 +30,10 @@ import {
   Wand2,
   XCircle
 } from "lucide-react";
+import { AppFooter as AppFooterView } from "@/app/AppFooter";
+import { AppShell } from "@/app/AppShell";
+import { AuthPage as AuthPageView, PendingAccessPage as PendingAccessPageView } from "@/pages/AuthPage";
+import { CatalogPage as CatalogPageView } from "@/pages/CatalogPage";
 import {
   createQuestion,
   createQuestionsBulk,
@@ -331,6 +335,8 @@ export default function App() {
 
   const adminSubjectDraft = selectedSubject ? subjectDraftFromSubject(selectedSubject) : subjectDraftFromSubject(subjects[0]);
   const canAccessEditor = authUser?.status === "active" && (authUser.role === "editor" || authUser.role === "admin");
+  const selectedPracticePath = selectedSubject ? buildSubjectPath(selectedSubject) : null;
+  const selectedExamPath = selectedSubject ? `${buildSubjectPath(selectedSubject)}/exam` : null;
 
   async function handleLogout() {
     await logout();
@@ -340,78 +346,19 @@ export default function App() {
     }
   }
 
-  const shellTone = route.kind === "auth" ? "shell-auth" : route.kind === "admin" || route.kind === "admin-import" ? "shell-admin" : "";
   const showFooter = !loading && !error;
-  const topbarContext =
-    selectedSubject && (route.kind === "practice" || route.kind === "exam")
-      ? `${route.kind === "exam" ? "Examen" : "Práctica"}: ${selectedSubject.name}`
-      : null;
 
   return (
-    <div className={`app-shell ${shellTone}`.trim()}>
-      <header className="topbar">
-        <div className="topbar-left">
-          <button className="brand" type="button" onClick={() => navigate("/")}>
-            <ClipboardList size={22} />
-            <span>ForIO</span>
-          </button>
-          {topbarContext ? <span className="topbar-context">{topbarContext}</span> : null}
-        </div>
-
-        <nav className="topbar-nav">
-          <button className={route.kind === "home" ? "active" : ""} type="button" onClick={() => navigate("/")}>
-            Catalogo
-          </button>
-          <button
-            className={route.kind === "practice" ? "active" : ""}
-            disabled={!selectedSubject}
-            type="button"
-            onClick={() => selectedSubject && navigate(buildSubjectPath(selectedSubject))}
-          >
-            Practica
-          </button>
-          <button
-            className={`${route.kind === "exam" ? "active" : ""} exam-nav-btn`}
-            disabled={!selectedSubject}
-            type="button"
-            onClick={() => selectedSubject && navigate(`${buildSubjectPath(selectedSubject)}/exam`)}
-          >
-            Examen
-          </button>
-          <button className={route.kind === "admin" ? "active" : ""} type="button" onClick={() => navigate("/admin")}>
-            Admin
-          </button>
-        </nav>
-
-        <div className="topbar-actions">
-          <button className="support-link" type="button">
-            <HelpCircle size={18} />
-            Support
-          </button>
-          {!authUser ? (
-            <button className={`session-button ${route.kind === "auth" ? "active" : ""}`} type="button" onClick={() => navigate("/auth")}>
-              Ingresar
-            </button>
-          ) : (
-            <>
-              <div className="session-pill">
-                <span className="session-avatar">{authUser.displayName.slice(0, 1).toUpperCase()}</span>
-                <div>
-                  <strong>{authUser.displayName}</strong>
-                  <span>
-                    {authUser.role} · {authUser.status}
-                  </span>
-                </div>
-              </div>
-              <button className="support-link" type="button" onClick={handleLogout}>
-                <LogOut size={18} />
-                Salir
-              </button>
-            </>
-          )}
-        </div>
-      </header>
-
+    <AppShell
+      authUser={authUser}
+      footer={showFooter ? <AppFooterView /> : undefined}
+      onLogout={handleLogout}
+      onNavigate={navigate}
+      route={route}
+      selectedExamPath={selectedExamPath}
+      selectedPracticePath={selectedPracticePath}
+      selectedSubjectName={selectedSubject?.name ?? null}
+    >
       {loading ? <main className="main">Cargando preguntas...</main> : null}
       {error ? (
         <main className="main error-box">
@@ -424,7 +371,7 @@ export default function App() {
         </main>
       ) : null}
       {!loading && !error && route.kind === "auth" ? (
-        <AuthPage
+        <AuthPageView
           currentUser={authUser}
           onAuthenticated={(user) => {
             setAuthUser(user);
@@ -452,7 +399,7 @@ export default function App() {
         <PracticePage questions={visibleQuestions} subject={selectedSubject} />
       ) : null}
       {!loading && !error && route.kind === "home" ? (
-        <CatalogPage navigate={navigate} questions={questions} subjects={subjects} />
+        <CatalogPageView navigate={navigate} questions={questions} subjects={subjects} />
       ) : null}
       {!loading && !error && (route.kind === "practice" || route.kind === "exam") && !selectedSubject ? (
         <main className="main empty-state">
@@ -464,10 +411,9 @@ export default function App() {
         </main>
       ) : null}
       {!loading && !error && (route.kind === "admin" || route.kind === "admin-import") && authUser?.status === "pending" ? (
-        <PendingAccessPage />
+        <PendingAccessPageView />
       ) : null}
-      {showFooter ? <AppFooter /> : null}
-    </div>
+    </AppShell>
   );
 }
 
