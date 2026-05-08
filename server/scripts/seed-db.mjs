@@ -1,4 +1,4 @@
-import "dotenv/config";
+import dotenv from "dotenv";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -10,6 +10,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const repoRoot = path.resolve(__dirname, "../..");
 const dataFile = path.resolve(repoRoot, "server/data/questions.json");
+const rootEnvFile = path.resolve(repoRoot, ".env");
+
+dotenv.config({ path: rootEnvFile, override: false });
 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {

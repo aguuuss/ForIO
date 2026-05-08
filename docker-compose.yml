@@ -4,11 +4,11 @@ services:
     container_name: forio-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: forio
-      POSTGRES_USER: forio
-      POSTGRES_PASSWORD: forio
+      POSTGRES_DB: ${POSTGRES_DB:-forio}
+      POSTGRES_USER: ${POSTGRES_USER:-forio}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-forio}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 

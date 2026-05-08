@@ -5,8 +5,10 @@ import {
   ArrowDown,
   CheckCircle2,
   ClipboardList,
+  ChevronRight,
   FileImage,
   GraduationCap,
+  Layers3,
   Pencil,
   Plus,
   RotateCcw,
@@ -22,6 +24,7 @@ import {
   deleteQuestion,
   getQuestions,
   getOcrStatus,
+  getSubjects,
   parseQuestionFromText,
   updateQuestion,
   uploadOcrImages
@@ -37,6 +40,8 @@ import type {
   Question,
   QuestionInput,
   QuestionType,
+  SubjectInput,
+  SubjectSummary,
   TableDragAndDropQuestion
 } from "./types/questions";
 
@@ -139,17 +144,88 @@ type TableImportBuilder = {
   nextAnswerIndex: number;
 };
 
+type SubjectDraft = Required<Pick<SubjectInput, "subjectSlug" | "subjectName" | "careerName" | "yearNumber">>;
+
+type PublicRoute =
+  | { kind: "home" }
+  | { kind: "practice"; yearSlug: string; subjectSlug: string }
+  | { kind: "exam"; yearSlug: string; subjectSlug: string }
+  | { kind: "admin" }
+  | { kind: "admin-import" };
+
+const defaultSubjectDraft: SubjectDraft = {
+  subjectSlug: "investigacion-operativa",
+  subjectName: "Investigacion Operativa",
+  careerName: "Ingenieria en Sistemas",
+  yearNumber: 4
+};
+
+function yearLabel(yearNumber: number) {
+  return `${yearNumber}to año`;
+}
+
+function yearSlug(yearNumber: number) {
+  return `${yearNumber}to`;
+}
+
+function buildSubjectPath(subject: Pick<SubjectSummary, "slug" | "yearNumber">) {
+  return `/${yearSlug(subject.yearNumber)}/${subject.slug}`;
+}
+
+function parseYearSlug(raw: string) {
+  const match = raw.trim().match(/^(\d+)/);
+  return match ? Number(match[1]) : null;
+}
+
+function parsePath(pathname: string): PublicRoute {
+  if (pathname === "/admin") {
+    return { kind: "admin" };
+  }
+  if (pathname === "/admin/import") {
+    return { kind: "admin-import" };
+  }
+
+  const parts = pathname.split("/").filter(Boolean);
+  if (parts.length === 0) {
+    return { kind: "home" };
+  }
+  if (parts.length === 2) {
+    return { kind: "practice", yearSlug: parts[0], subjectSlug: parts[1] };
+  }
+  if (parts.length === 3 && parts[2] === "exam") {
+    return { kind: "exam", yearSlug: parts[0], subjectSlug: parts[1] };
+  }
+  return { kind: "home" };
+}
+
+function subjectDraftFromSubject(subject?: SubjectSummary | null): SubjectDraft {
+  if (!subject) {
+    return defaultSubjectDraft;
+  }
+
+  return {
+    subjectSlug: subject.slug,
+    subjectName: subject.name,
+    careerName: subject.careerName,
+    yearNumber: subject.yearNumber
+  };
+}
+
 export default function App() {
   const [questions, setQuestions] = useState<Question[]>([]);
+  const [subjects, setSubjects] = useState<SubjectSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [path, setPath] = useState(window.location.pathname);
+  const route = useMemo(() => parsePath(path), [path]);
 
-  async function loadQuestions() {
+  async function loadAppData() {
     setLoading(true);
     setError("");
     try {
-      setQuestions(await getQuestionsWithRetry());
+      const [nextQuestions, nextSubjects] = await Promise.all([getQuestionsWithRetry(), getSubjects()]);
+      setQuestions(nextQuestions);
+      setSubjects(nextSubjects);
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : "No se pudieron cargar las preguntas.");
     } finally {
@@ -171,7 +247,7 @@ export default function App() {
   }
 
   useEffect(() => {
-    loadQuestions();
+    loadAppData();
   }, []);
 
   useEffect(() => {
@@ -185,25 +261,58 @@ export default function App() {
     setPath(nextPath);
   }
 
+  const selectedSubject = useMemo(() => {
+    if (route.kind !== "practice" && route.kind !== "exam") {
+      return null;
+    }
+
+    const selectedYear = parseYearSlug(route.yearSlug);
+    return (
+      subjects.find((subject) => subject.slug === route.subjectSlug && subject.yearNumber === selectedYear) ?? null
+    );
+  }, [route, subjects]);
+
+  const visibleQuestions = useMemo(() => {
+    if (!selectedSubject) {
+      return questions;
+    }
+    return questions.filter((question) => question.subject.slug === selectedSubject.slug);
+  }, [questions, selectedSubject]);
+
+  const adminSubjectDraft = selectedSubject ? subjectDraftFromSubject(selectedSubject) : subjectDraftFromSubject(subjects[0]);
+
   return (
     <div className="app-shell">
       <header className="topbar">
         <button className="brand" type="button" onClick={() => navigate("/")}>
           <ClipboardList size={22} />
-          Quiz Simplex
+          ForIO
         </button>
         <nav>
-          <button className={path === "/" ? "active" : ""} type="button" onClick={() => navigate("/")}>
+          <button className={route.kind === "home" ? "active" : ""} type="button" onClick={() => navigate("/")}>
+            Catalogo
+          </button>
+          <button
+            className={`${route.kind === "practice" ? "active" : ""}`}
+            disabled={!selectedSubject}
+            type="button"
+            onClick={() => selectedSubject && navigate(buildSubjectPath(selectedSubject))}
+          >
             Practica
           </button>
-          <button className={`${path === "/exam" ? "active" : ""} exam-nav-btn`} type="button" onClick={() => navigate("/exam")}>
+          <button
+            className={`${route.kind === "exam" ? "active" : ""} exam-nav-btn`}
+            disabled={!selectedSubject}
+            type="button"
+            onClick={() => selectedSubject && navigate(`${buildSubjectPath(selectedSubject)}/exam`)}
+          >
             <GraduationCap size={16} />
             Examen
           </button>
-          <button className={path === "/admin" ? "active" : ""} type="button" onClick={() => navigate("/admin")}>
+          <button className={route.kind === "admin" ? "active" : ""} type="button" onClick={() => navigate("/admin")}>
             Admin
           </button>
-          <button className={path === "/admin/import" ? "active" : ""} type="button" onClick={() => navigate("/admin/import")}>
+          <button className={route.kind === "admin-import" ? "active" : ""} type="button" onClick={() => navigate("/admin/import")}>
             Importar
           </button>
         </nav>
@@ -214,22 +323,36 @@ export default function App() {
         <main className="main error-box">
           <h1>No pude cargar las preguntas</h1>
           <p>{error}</p>
-          <button className="primary-button" type="button" onClick={loadQuestions}>
+          <button className="primary-button" type="button" onClick={loadAppData}>
             <RotateCcw size={18} />
             Reintentar
           </button>
         </main>
       ) : null}
-      {!loading && !error && path === "/admin/import" ? (
-        <ImportPage onSaved={loadQuestions} />
+      {!loading && !error && route.kind === "admin-import" ? (
+        <ImportPage onSaved={loadAppData} initialSubject={adminSubjectDraft} subjects={subjects} />
       ) : null}
-      {!loading && !error && path === "/admin" ? (
-        <AdminPage questions={questions} onChange={loadQuestions} />
+      {!loading && !error && route.kind === "admin" ? (
+        <AdminPage questions={questions} onChange={loadAppData} initialSubject={adminSubjectDraft} subjects={subjects} />
       ) : null}
-      {!loading && !error && path === "/exam" ? (
-        <ExamPage questions={questions} />
+      {!loading && !error && route.kind === "exam" && selectedSubject ? (
+        <ExamPage questions={visibleQuestions} subject={selectedSubject} />
       ) : null}
-      {!loading && !error && path !== "/admin" && path !== "/admin/import" && path !== "/exam" ? <PracticePage questions={questions} /> : null}
+      {!loading && !error && route.kind === "practice" && selectedSubject ? (
+        <PracticePage questions={visibleQuestions} subject={selectedSubject} />
+      ) : null}
+      {!loading && !error && route.kind === "home" ? (
+        <CatalogPage navigate={navigate} questions={questions} subjects={subjects} />
+      ) : null}
+      {!loading && !error && (route.kind === "practice" || route.kind === "exam") && !selectedSubject ? (
+        <main className="main empty-state">
+          <h1>Materia no encontrada</h1>
+          <p>La ruta pública no coincide con una materia cargada.</p>
+          <button className="primary-button" type="button" onClick={() => navigate("/")}>
+            Volver al catalogo
+          </button>
+        </main>
+      ) : null}
     </div>
   );
 }
@@ -281,7 +404,118 @@ function evaluateExamAnswer(question: Question, answer: ExamAnswer | null): { is
   return { isCorrect: false };
 }
 
-function ExamPage({ questions }: { questions: Question[] }) {
+function SubjectHero({
+  subject,
+  questionsCount,
+  modeLabel
+}: {
+  subject: SubjectSummary;
+  questionsCount: number;
+  modeLabel: string;
+}) {
+  return (
+    <section className="subject-hero">
+      <div className="subject-hero-copy">
+        <span className="hero-eyebrow">
+          <Layers3 size={15} />
+          {subject.careerName}
+        </span>
+        <h1>{subject.name}</h1>
+        <p>
+          {yearLabel(subject.yearNumber)} · {questionsCount} preguntas disponibles · {modeLabel}
+        </p>
+      </div>
+    </section>
+  );
+}
+
+function CatalogPage({
+  subjects,
+  questions,
+  navigate
+}: {
+  subjects: SubjectSummary[];
+  questions: Question[];
+  navigate: (path: string) => void;
+}) {
+  const subjectsByYear = useMemo(() => {
+    return subjects.reduce<Map<number, SubjectSummary[]>>((acc, subject) => {
+      const current = acc.get(subject.yearNumber) ?? [];
+      current.push(subject);
+      acc.set(subject.yearNumber, current);
+      return acc;
+    }, new Map());
+  }, [subjects]);
+
+  const questionCountBySubject = useMemo(() => {
+    return questions.reduce<Record<string, number>>((acc, question) => {
+      acc[question.subject.slug] = (acc[question.subject.slug] ?? 0) + 1;
+      return acc;
+    }, {});
+  }, [questions]);
+
+  const orderedYears = Array.from(subjectsByYear.keys()).sort((a, b) => a - b);
+
+  return (
+    <main className="main catalog-page">
+      <section className="catalog-hero">
+        <span className="hero-eyebrow">
+          <ClipboardList size={15} />
+          Catalogo publico
+        </span>
+        <h1>Entrenamiento por año y materia</h1>
+        <p>
+          La app ya quedó lista para crecer como producto: elegís año, entrás a la materia y desde ahí practicás o rendís examen.
+        </p>
+      </section>
+
+      {orderedYears.length === 0 ? (
+        <section className="empty-state">
+          <h1>No hay materias cargadas</h1>
+          <p>Entrá al admin para crear la primera materia pública.</p>
+        </section>
+      ) : (
+        orderedYears.map((year) => (
+          <section className="catalog-year-block" key={year}>
+            <div className="catalog-year-head">
+              <div>
+                <span className="year-chip">{yearLabel(year)}</span>
+                <h2>Materias disponibles</h2>
+              </div>
+            </div>
+            <div className="subject-grid">
+              {(subjectsByYear.get(year) ?? []).map((subject) => {
+                const count = questionCountBySubject[subject.slug] ?? 0;
+                return (
+                  <article className="subject-card" key={subject.id}>
+                    <div className="subject-card-top">
+                      <span className="type-pill">{subject.careerName}</span>
+                      <strong>{count} preguntas</strong>
+                    </div>
+                    <h3>{subject.name}</h3>
+                    <p>Ruta pública lista para compartir y seguir cargando contenido sin mezclar materias.</p>
+                    <div className="subject-card-actions">
+                      <button className="primary-button" type="button" onClick={() => navigate(buildSubjectPath(subject))}>
+                        Practicar
+                        <ChevronRight size={16} />
+                      </button>
+                      <button className="ghost-button" type="button" onClick={() => navigate(`${buildSubjectPath(subject)}/exam`)}>
+                        <GraduationCap size={16} />
+                        Examen
+                      </button>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          </section>
+        ))
+      )}
+    </main>
+  );
+}
+
+function ExamPage({ questions, subject }: { questions: Question[]; subject: SubjectSummary }) {
   const [examQuestions, setExamQuestions] = useState<Question[] | null>(null);
   const [index, setIndex] = useState(0);
   const [collectedAnswers, setCollectedAnswers] = useState<(ExamAnswer | null)[]>([]);
@@ -365,7 +599,7 @@ function ExamPage({ questions }: { questions: Question[] }) {
     return (
       <main className="main empty-state">
         <h1>No hay preguntas cargadas</h1>
-        <p>Entrá al admin para crear la primera.</p>
+        <p>Esta materia todavía no tiene preguntas cargadas.</p>
       </main>
     );
   }
@@ -378,6 +612,7 @@ function ExamPage({ questions }: { questions: Question[] }) {
 
     return (
       <main className="main exam-results-page">
+        <SubjectHero modeLabel="Modo examen" questionsCount={questions.length} subject={subject} />
         <section className="exam-results-header">
           <div className={`exam-score-badge ${passed ? "passed" : "failed"}`}>
             <GraduationCap size={36} />
@@ -420,6 +655,7 @@ function ExamPage({ questions }: { questions: Question[] }) {
     const count = Math.min(EXAM_QUESTION_COUNT, questions.length);
     return (
       <main className="main exam-landing">
+        <SubjectHero modeLabel="Modo examen" questionsCount={questions.length} subject={subject} />
         <section className="quiz-card exam-start-card">
           <div className="exam-start-icon">
             <GraduationCap size={48} />
@@ -457,6 +693,7 @@ function ExamPage({ questions }: { questions: Question[] }) {
 
   return (
     <main className="main">
+      <SubjectHero modeLabel="Modo examen" questionsCount={questions.length} subject={subject} />
       <section className="quiz-card">
         <div className="exam-progress-bar">
           <div className="exam-progress-fill" style={{ width: `${progress}%` }} />
@@ -583,7 +820,7 @@ function ExamResultItem({ index, result }: { index: number; result: ExamQuestion
   );
 }
 
-function PracticePage({ questions }: { questions: Question[] }) {
+function PracticePage({ questions, subject }: { questions: Question[]; subject: SubjectSummary }) {
   const [practiceQuestions, setPracticeQuestions] = useState<Question[] | null>(null);
   const [index, setIndex] = useState(0);
   const [score, setScore] = useState(0);
@@ -662,13 +899,13 @@ function PracticePage({ questions }: { questions: Question[] }) {
     return (
       <main className="main empty-state">
         <h1>No hay preguntas cargadas</h1>
-        <p>Entrá al admin para crear la primera.</p>
+        <p>Esta materia todavía no tiene preguntas cargadas.</p>
       </main>
     );
   }
 
   if (!practiceQuestions) {
-    return <PracticePicker questions={questions} onStart={startPractice} />;
+    return <PracticePicker questions={questions} onStart={startPractice} subject={subject} />;
   }
 
   if (isFinished) {
@@ -699,6 +936,7 @@ function PracticePage({ questions }: { questions: Question[] }) {
 
   return (
     <main className="main">
+      <SubjectHero modeLabel="Modo practica" questionsCount={questions.length} subject={subject} />
       <section className="quiz-card">
         <div className="quiz-meta">
           <span>
@@ -786,7 +1024,15 @@ function Feedback({ question, isCorrect }: { question: Question; isCorrect: bool
   );
 }
 
-function PracticePicker({ questions, onStart }: { questions: Question[]; onStart: (questions: Question[]) => void }) {
+function PracticePicker({
+  questions,
+  onStart,
+  subject
+}: {
+  questions: Question[];
+  onStart: (questions: Question[]) => void;
+  subject: SubjectSummary;
+}) {
   const [selectedIds, setSelectedIds] = useState<string[]>(questions.map((question) => question.id));
   const selectedQuestions = questions.filter((question) => selectedIds.includes(question.id));
 
@@ -804,6 +1050,7 @@ function PracticePicker({ questions, onStart }: { questions: Question[]; onStart
 
   return (
     <main className="main practice-picker">
+      <SubjectHero modeLabel="Modo practica" questionsCount={questions.length} subject={subject} />
       <section className="quiz-card">
         <div className="section-title">
           <h1>Elegir práctica</h1>
@@ -858,12 +1105,21 @@ function PracticePicker({ questions, onStart }: { questions: Question[]; onStart
   );
 }
 
-function ImportPage({ onSaved }: { onSaved: () => Promise<void> }) {
+function ImportPage({
+  onSaved,
+  initialSubject,
+  subjects
+}: {
+  onSaved: () => Promise<void>;
+  initialSubject: SubjectDraft;
+  subjects: SubjectSummary[];
+}) {
   const [drafts, setDrafts] = useState<ImportDraft[]>([]);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const [ocrStatus, setOcrStatus] = useState<OcrStatus | null>(null);
+  const [subjectDraft, setSubjectDraft] = useState<SubjectDraft>(initialSubject);
   const [showTableBuilder, setShowTableBuilder] = useState(false);
   const [tableBuilder, setTableBuilder] = useState<TableImportBuilder>(() => ({
     statement: "",
@@ -878,6 +1134,12 @@ function ImportPage({ onSaved }: { onSaved: () => Promise<void> }) {
       .then(setOcrStatus)
       .catch(() => setOcrStatus(null));
   }, []);
+
+  useEffect(() => {
+    if (drafts.length === 0) {
+      setSubjectDraft(initialSubject);
+    }
+  }, [drafts.length, initialSubject]);
 
   useEffect(() => {
     function handlePaste(event: ClipboardEvent) {
@@ -968,7 +1230,9 @@ function ImportPage({ onSaved }: { onSaved: () => Promise<void> }) {
     setBusy(true);
     setMessage("");
     try {
-      const draftQuestions = drafts.map((draft) => normalizeQuestionInput({ ...draft.parsedQuestion, ocrText: draft.text }));
+      const draftQuestions = drafts.map((draft) =>
+        normalizeQuestionInput({ ...draft.parsedQuestion, ocrText: draft.text, ...subjectDraft })
+      );
       const questionsToSave = [...draftQuestions];
       if (showTableBuilder && tableBlankCells(tableBuilder.table).length > 0 && tableBuilder.statement.trim()) {
         questionsToSave.push(
@@ -976,7 +1240,8 @@ function ImportPage({ onSaved }: { onSaved: () => Promise<void> }) {
             type: "table_drag_and_drop",
             statement: tableBuilder.statement.trim(),
             table: tableBuilder.table,
-            draggableOptions: tableBuilder.options
+            draggableOptions: tableBuilder.options,
+            ...subjectDraft
           })
         );
       }
@@ -1120,7 +1385,8 @@ function ImportPage({ onSaved }: { onSaved: () => Promise<void> }) {
           type: "table_drag_and_drop",
           statement: tableBuilder.statement.trim(),
           table: tableBuilder.table,
-          draggableOptions: tableBuilder.options
+          draggableOptions: tableBuilder.options,
+          ...subjectDraft
         })
       ]);
       await onSaved();
@@ -1162,6 +1428,7 @@ function ImportPage({ onSaved }: { onSaved: () => Promise<void> }) {
           <input accept="image/*" multiple type="file" onChange={(event) => uploadFiles(event.target.files)} />
         </label>
         <p className="helper-text">Recorta una captura y pegala con Ctrl+V aca. Tambien podes soltar archivos o elegirlos desde el explorador.</p>
+        <SubjectFieldsEditor compact subject={subjectDraft} onChange={setSubjectDraft} subjects={subjects} />
         {ocrStatus ? (
           <p className={`provider-status ${ocrStatus.awsTextractReady ? "ready" : "warning"}`}>
             OCR activo: {ocrStatus.provider}
@@ -1680,14 +1947,38 @@ function questionTypeLabel(type: QuestionType) {
 
 function questionSearchText(question: Question) {
   if (question.type === "multiple_choice") {
-    return [question.statement, question.type, ...question.options, question.correctAnswer].join(" ").toLowerCase();
+    return [
+      question.statement,
+      question.type,
+      question.subject.name,
+      question.subject.careerName,
+      String(question.subject.yearNumber),
+      ...question.options,
+      question.correctAnswer
+    ]
+      .join(" ")
+      .toLowerCase();
   }
   if (question.type === "drag_and_drop") {
-    return [question.statement, question.type, ...question.textParts, ...question.draggableOptions, ...question.correctAnswers].join(" ").toLowerCase();
+    return [
+      question.statement,
+      question.type,
+      question.subject.name,
+      question.subject.careerName,
+      String(question.subject.yearNumber),
+      ...question.textParts,
+      ...question.draggableOptions,
+      ...question.correctAnswers
+    ]
+      .join(" ")
+      .toLowerCase();
   }
   return [
     question.statement,
     question.type,
+    question.subject.name,
+    question.subject.careerName,
+    String(question.subject.yearNumber),
     ...question.draggableOptions,
     ...question.table.cells.flatMap((cell) => [cell.content, cell.correctAnswer ?? "", ...(cell.acceptedAnswers ?? [])])
   ]
@@ -1695,7 +1986,70 @@ function questionSearchText(question: Question) {
     .toLowerCase();
 }
 
-function AdminPage({ questions, onChange }: { questions: Question[]; onChange: () => Promise<void> }) {
+function SubjectFieldsEditor({
+  subject,
+  onChange,
+  subjects,
+  compact = false
+}: {
+  subject: SubjectDraft;
+  onChange: (subject: SubjectDraft) => void;
+  subjects: SubjectSummary[];
+  compact?: boolean;
+}) {
+  const knownMatch = subjects.find((item) => item.slug === subject.subjectSlug);
+
+  return (
+    <div className={`subject-fields ${compact ? "compact" : ""}`}>
+      <div className="section-title">
+        <h2>Contexto de materia</h2>
+        {knownMatch ? <span className="type-pill">Materia existente</span> : <span className="type-pill">Nueva materia</span>}
+      </div>
+      <div className="dimension-grid">
+        <label>
+          Slug
+          <input
+            value={subject.subjectSlug}
+            onChange={(event) => onChange({ ...subject, subjectSlug: event.target.value })}
+            placeholder="investigacion-operativa"
+          />
+        </label>
+        <label>
+          Año
+          <input
+            min={1}
+            type="number"
+            value={subject.yearNumber}
+            onChange={(event) => onChange({ ...subject, yearNumber: Number(event.target.value) || 1 })}
+          />
+        </label>
+      </div>
+      <label>
+        Nombre de la materia
+        <input value={subject.subjectName} onChange={(event) => onChange({ ...subject, subjectName: event.target.value })} />
+      </label>
+      <label>
+        Carrera
+        <input value={subject.careerName} onChange={(event) => onChange({ ...subject, careerName: event.target.value })} />
+      </label>
+      <small>
+        Si el slug ya existe, se reutiliza esa materia. Si no existe, se crea con este nombre, carrera y año.
+      </small>
+    </div>
+  );
+}
+
+function AdminPage({
+  questions,
+  onChange,
+  initialSubject,
+  subjects
+}: {
+  questions: Question[];
+  onChange: () => Promise<void>;
+  initialSubject: SubjectDraft;
+  subjects: SubjectSummary[];
+}) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [type, setType] = useState<QuestionType>("multiple_choice");
   const [statement, setStatement] = useState("");
@@ -1708,6 +2062,13 @@ function AdminPage({ questions, onChange }: { questions: Question[]; onChange: (
   const [tableOptions, setTableOptions] = useState<string[]>(emptyTable.draggableOptions);
   const [message, setMessage] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [subjectDraft, setSubjectDraft] = useState<SubjectDraft>(initialSubject);
+
+  useEffect(() => {
+    if (!editingId) {
+      setSubjectDraft(initialSubject);
+    }
+  }, [initialSubject, editingId]);
 
   const blankCount = useMemo(
     () =>
@@ -1727,6 +2088,7 @@ function AdminPage({ questions, onChange }: { questions: Question[]; onChange: (
     setType(nextType);
     setStatement("");
     setMessage("");
+    setSubjectDraft(initialSubject);
     if (nextType === "multiple_choice") {
       setOptions(["", ""]);
       setCorrectAnswer("");
@@ -1745,6 +2107,7 @@ function AdminPage({ questions, onChange }: { questions: Question[]; onChange: (
     setType(question.type);
     setStatement(question.statement);
     setMessage("");
+    setSubjectDraft(subjectDraftFromSubject(question.subject));
     if (question.type === "multiple_choice") {
       setOptions(question.options);
       setCorrectAnswer(question.correctAnswer);
@@ -1767,7 +2130,8 @@ function AdminPage({ questions, onChange }: { questions: Question[]; onChange: (
               type,
               statement: statement.trim(),
               options: cleanList(options),
-              correctAnswer: correctAnswer.trim()
+              correctAnswer: correctAnswer.trim(),
+              ...subjectDraft
             }
           : type === "drag_and_drop"
             ? {
@@ -1775,7 +2139,8 @@ function AdminPage({ questions, onChange }: { questions: Question[]; onChange: (
                 statement: statement.trim(),
                 textParts: parseDragTextParts(textPartsRaw),
                 draggableOptions: cleanList(draggableOptions),
-                correctAnswers: cleanList(correctAnswers)
+                correctAnswers: cleanList(correctAnswers),
+                ...subjectDraft
               }
             : {
                 type,
@@ -1784,7 +2149,8 @@ function AdminPage({ questions, onChange }: { questions: Question[]; onChange: (
                 draggableOptions: cleanList([
                   ...tableOptions,
                   ...tableBlankCells(table).flatMap((cell) => [cell.correctAnswer ?? "", ...(cell.acceptedAnswers ?? [])])
-                ])
+                ]),
+                ...subjectDraft
               };
 
       if (editingId) {
@@ -1831,6 +2197,8 @@ function AdminPage({ questions, onChange }: { questions: Question[]; onChange: (
             Tabla
           </button>
         </div>
+
+        <SubjectFieldsEditor subject={subjectDraft} onChange={setSubjectDraft} subjects={subjects} />
 
         <label>
           Enunciado
@@ -1879,6 +2247,9 @@ function AdminPage({ questions, onChange }: { questions: Question[]; onChange: (
             <article className="question-item" key={question.id}>
               <div>
                 <span className="type-pill">{questionTypeLabel(question.type)}</span>
+                <p className="question-subject-meta">
+                  {yearLabel(question.subject.yearNumber)} · {question.subject.name}
+                </p>
                 <h2>{question.statement}</h2>
               </div>
               <div className="item-actions">

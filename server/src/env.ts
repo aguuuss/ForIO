@@ -4,13 +4,6 @@ import { fileURLToPath } from "node:url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const rootEnvFile = path.resolve(__dirname, "../../.env");
 
-const candidateEnvFiles = [
-  path.resolve(process.cwd(), ".env"),
-  path.resolve(__dirname, "../.env"),
-  path.resolve(__dirname, "../../.env")
-];
-
-for (const envFile of candidateEnvFiles) {
-  dotenv.config({ path: envFile, override: false });
-}
+dotenv.config({ path: rootEnvFile, override: false });

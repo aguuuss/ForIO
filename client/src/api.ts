@@ -1,4 +1,4 @@
-import type { Question, QuestionInput } from "./types/questions";
+import type { Question, QuestionInput, SubjectSummary } from "./types/questions";
 
 export type OcrUploadResult = {
   filename: string;
@@ -23,6 +23,11 @@ export type OcrStatus = {
   missingAwsCredentials: string[];
 };
 
+export type QuestionFilters = {
+  subjectSlug?: string;
+  yearNumber?: number;
+};
+
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
   const response = await fetch(url, {
     headers: { "Content-Type": "application/json" },
@@ -41,8 +46,21 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-export function getQuestions() {
-  return request<Question[]>("/api/questions");
+export function getQuestions(filters?: QuestionFilters) {
+  const query = new URLSearchParams();
+  if (filters?.subjectSlug) {
+    query.set("subjectSlug", filters.subjectSlug);
+  }
+  if (typeof filters?.yearNumber === "number") {
+    query.set("yearNumber", String(filters.yearNumber));
+  }
+
+  const suffix = query.size > 0 ? `?${query.toString()}` : "";
+  return request<Question[]>(`/api/questions${suffix}`);
+}
+
+export function getSubjects() {
+  return request<SubjectSummary[]>("/api/subjects");
 }
 
 export function createQuestion(question: QuestionInput) {

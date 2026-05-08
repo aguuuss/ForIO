@@ -25,11 +25,13 @@ Desde la raiz del proyecto:
 npm install
 ```
 
-Copiá `.env.example` a `.env` para configurar base, materia default, OCR o puerto:
+Copiá `.env.example` a `.env` en la raiz del repo para configurar base, materia default, OCR o puerto:
 
 ```bash
 cp .env.example .env
 ```
+
+La app ahora toma variables solo desde ese archivo raiz. `server/.env` ya no se usa.
 
 ## Base de datos local
 
@@ -43,6 +45,15 @@ La configuracion default crea una base local accesible con:
 
 ```bash
 DATABASE_URL=postgresql://forio:forio@localhost:5432/forio
+```
+
+Y el mismo `.env` raiz tambien alimenta Docker Compose para Postgres:
+
+```bash
+POSTGRES_DB=forio
+POSTGRES_USER=forio
+POSTGRES_PASSWORD=forio
+POSTGRES_PORT=5432
 ```
 
 ## Migrar las preguntas actuales a Postgres
