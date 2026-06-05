@@ -1457,6 +1457,7 @@ function ImportPage({
     setMessage("Procesando OCR...");
     try {
       const response = await uploadOcrImages(imageFiles);
+      setOcrStatus(response.providerStatus);
       const normalResults = response.results.filter((result) => result.parsedQuestion.type !== "table_drag_and_drop");
       const tableResults = response.results.filter((result) => result.parsedQuestion.type === "table_drag_and_drop");
 
@@ -1721,9 +1722,13 @@ function ImportPage({
         <SubjectFieldsEditor compact subject={subjectDraft} onChange={setSubjectDraft} subjects={subjects} />
         {ocrStatus ? (
           <p className={`provider-status ${ocrStatus.awsTextractReady ? "ready" : "warning"}`}>
-            OCR activo: {ocrStatus.provider}
-            {ocrStatus.fallbackToTesseract ? " con fallback a tesseract" : ""}
-            {!ocrStatus.awsTextractReady ? `. Faltan: ${ocrStatus.missingAwsCredentials.join(", ")}` : ""}
+            OCR activo: {ocrStatus.effectiveProvider}
+            {ocrStatus.configuredProvider === "aws-textract" ? ` · provider global: ${ocrStatus.configuredProvider}` : ""}
+            {ocrStatus.fallbackToTesseract ? " · fallback a tesseract habilitado" : ""}
+            {!ocrStatus.canUseAwsTextract && ocrStatus.configuredProvider === "aws-textract"
+              ? " · tu cuenta usa OCR estándar; Textract está reservado a administración"
+              : ""}
+            {!ocrStatus.awsTextractReady ? `. Faltan credenciales AWS: ${ocrStatus.missingAwsCredentials.join(", ")}` : ""}
           </p>
         ) : null}
         <p className="helper-text">El OCR no intenta ser perfecto: lee la imagen, propone una pregunta y deja todo editable.</p>

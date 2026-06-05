@@ -179,11 +179,17 @@ OCR_FALLBACK_TO_TESSERACT=true
 
 El endpoint `POST /api/ocr/upload` devuelve texto completo, lineas detectadas, bloques de Textract cuando existan y confidence promedio si esta disponible.
 
+Si el backend está configurado con `OCR_PROVIDER=aws-textract`, Textract queda reservado para cuentas `admin active`. Los `editor active` siguen pudiendo importar, pero usan Tesseract automáticamente.
+
+Además, `POST /api/ocr/upload` tiene rate limiting técnico por usuario autenticado para evitar abuso rápido del OCR.
+
 Para verificar que proveedor esta usando el backend:
 
 ```http
 GET /api/ocr/status
 ```
+
+La respuesta ahora informa tanto el provider configurado globalmente como el provider efectivo para la sesión actual.
 
 Cuando subis o pegas una imagen, la consola del backend muestra logs como:
 

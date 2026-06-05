@@ -3,6 +3,8 @@ import type { AuthUser, Question, QuestionInput, SessionUser, SubjectSummary, Us
 export type OcrUploadResult = {
   filename: string;
   provider: string;
+  providerUsed: string;
+  usedFallback: boolean;
   text: string;
   lines: string[];
   blocks?: Array<{
@@ -17,7 +19,11 @@ export type OcrUploadResult = {
 };
 
 export type OcrStatus = {
+  configuredProvider: string;
+  effectiveProvider: string;
   provider: string;
+  canUseAwsTextract: boolean;
+  awsReservedToAdmins: boolean;
   fallbackToTesseract: boolean;
   awsTextractReady: boolean;
   missingAwsCredentials: string[];
@@ -152,7 +158,7 @@ export async function uploadOcrImages(files: File[]) {
     throw new Error(error.message ?? "No se pudo procesar OCR.");
   }
 
-  return response.json() as Promise<{ results: OcrUploadResult[] }>;
+  return response.json() as Promise<{ providerStatus: OcrStatus; results: OcrUploadResult[] }>;
 }
 
 export function parseQuestionFromText(text: string) {

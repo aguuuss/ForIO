@@ -5,7 +5,7 @@ import multer from "multer";
 import { authCookieMiddleware, loadSessionUser, requireAdmin, requireEditor } from "./auth.js";
 import { listUsers, loginUser, logoutSession, registerUser, updateUserRole, updateUserStatus } from "./authStore.js";
 import { AUTH_COOKIE_NAME, AUTH_SESSION_TTL_DAYS, initializeDatabase } from "./db.js";
-import { createOcrProvider, getOcrStatus } from "./ocrProvider.js";
+import { canUseAwsTextract, createOcrProviderForUser, getOcrStatus } from "./ocrProvider.js";
 import { parseQuestionFromOcr } from "./parseQuestion.js";
 import { createQuestion, createQuestionsBulk, deleteQuestion, getQuestions, listSubjects, updateQuestion } from "./store.js";
 import type { AuthenticatedRequest } from "./auth.js";
@@ -21,6 +21,21 @@ const upload = multer({
     files: 8
   }
 });
+const OCR_RATE_LIMIT_WINDOW_MS = Number(process.env.OCR_RATE_LIMIT_WINDOW_MS) || 60_000;
+const OCR_RATE_LIMIT_REQUESTS = Number(process.env.OCR_RATE_LIMIT_REQUESTS) || 6;
+const OCR_RATE_LIMIT_IMAGES = Number(process.env.OCR_RATE_LIMIT_IMAGES) || 24;
+const OCR_RATE_LIMIT_BYTES = Number(process.env.OCR_RATE_LIMIT_BYTES) || 24 * 1024 * 1024;
+const ocrRateLimitStore = new Map<
+  string,
+  { windowStartedAt: number; requestCount: number; imageCount: number; totalBytes: number }
+>();
+const ocrMetrics = {
+  totalRequests: 0,
+  awsTextractRequests: 0,
+  tesseractRequests: 0,
+  fallbackRequests: 0,
+  rateLimitedRequests: 0
+};
 
 app.use(
   cors({
@@ -73,8 +88,9 @@ app.get("/api/subjects", async (_req, res, next) => {
   }
 });
 
-app.get("/api/ocr/status", (_req, res) => {
-  res.json(getOcrStatus());
+app.get("/api/ocr/status", (req, res) => {
+  const authReq = req as AuthenticatedRequest;
+  res.json(getOcrStatus(authReq.authUser));
 });
 
 app.get("/api/auth/me", (req, res) => {
@@ -189,26 +205,108 @@ app.post("/api/questions/bulk", requireEditor, async (req, res) => {
   }
 });
 
+function enforceOcrRateLimit(req: AuthenticatedRequest, files: Express.Multer.File[]) {
+  const user = req.authUser;
+  if (!user) {
+    return { allowed: false, message: "Necesitás iniciar sesión." };
+  }
+
+  const key = user.id;
+  const now = Date.now();
+  const totalBytes = files.reduce((sum, file) => sum + file.size, 0);
+  const current = ocrRateLimitStore.get(key);
+
+  if (!current || now - current.windowStartedAt >= OCR_RATE_LIMIT_WINDOW_MS) {
+    ocrRateLimitStore.set(key, {
+      windowStartedAt: now,
+      requestCount: 1,
+      imageCount: files.length,
+      totalBytes
+    });
+    return { allowed: true };
+  }
+
+  if (
+    current.requestCount + 1 > OCR_RATE_LIMIT_REQUESTS ||
+    current.imageCount + files.length > OCR_RATE_LIMIT_IMAGES ||
+    current.totalBytes + totalBytes > OCR_RATE_LIMIT_BYTES
+  ) {
+    ocrMetrics.rateLimitedRequests += 1;
+    return {
+      allowed: false,
+      message: "Superaste el límite temporal de OCR. Esperá un minuto y probá de nuevo."
+    };
+  }
+
+  current.requestCount += 1;
+  current.imageCount += files.length;
+  current.totalBytes += totalBytes;
+  ocrRateLimitStore.set(key, current);
+  return { allowed: true };
+}
+
 app.post("/api/ocr/upload", requireEditor, upload.array("images"), async (req, res) => {
   try {
+    const authReq = req as AuthenticatedRequest;
     const files = req.files as Express.Multer.File[] | undefined;
     if (!files?.length) {
       res.status(400).json({ message: "Subi al menos una imagen." });
       return;
     }
 
-    const provider = createOcrProvider();
+    const rateLimit = enforceOcrRateLimit(authReq, files);
+    if (!rateLimit.allowed) {
+      res.status(authReq.authUser ? 429 : 401).json({ message: rateLimit.message });
+      return;
+    }
+
+    const providerStatus = getOcrStatus(authReq.authUser);
+    const provider = createOcrProviderForUser(authReq.authUser);
+    ocrMetrics.totalRequests += 1;
     const results = await Promise.all(
       files.map(async (file) => {
-        console.log(`[OCR] Procesando ${file.originalname} con provider=${getOcrStatus().provider}`);
-        const ocr = await provider.recognize(file.buffer);
         console.log(
-          `[OCR] ${file.originalname} listo provider=${ocr.provider} lineas=${ocr.lines.length} confidence=${ocr.confidence?.toFixed(1) ?? "n/a"}`
+          JSON.stringify({
+            scope: "ocr",
+            event: "request_started",
+            userId: authReq.authUser?.id,
+            role: authReq.authUser?.role,
+            configuredProvider: providerStatus.configuredProvider,
+            effectiveProvider: providerStatus.effectiveProvider,
+            canUseAwsTextract: canUseAwsTextract(authReq.authUser),
+            fileName: file.originalname,
+            fileSize: file.size
+          })
+        );
+        const ocr = await provider.recognize(file.buffer);
+        if (ocr.provider === "aws-textract") {
+          ocrMetrics.awsTextractRequests += 1;
+        } else {
+          ocrMetrics.tesseractRequests += 1;
+        }
+        if (ocr.usedFallback) {
+          ocrMetrics.fallbackRequests += 1;
+        }
+        console.log(
+          JSON.stringify({
+            scope: "ocr",
+            event: "request_finished",
+            userId: authReq.authUser?.id,
+            role: authReq.authUser?.role,
+            providerUsed: ocr.provider,
+            usedFallback: ocr.usedFallback ?? false,
+            fileName: file.originalname,
+            lines: ocr.lines.length,
+            confidence: ocr.confidence,
+            metrics: ocrMetrics
+          })
         );
         const parsedQuestion = parseQuestionFromOcr(ocr.text);
         return {
           filename: file.originalname,
           provider: ocr.provider,
+          providerUsed: ocr.provider,
+          usedFallback: ocr.usedFallback ?? false,
           text: ocr.text,
           lines: ocr.lines,
           blocks: ocr.blocks,
@@ -218,7 +316,10 @@ app.post("/api/ocr/upload", requireEditor, upload.array("images"), async (req, r
       })
     );
 
-    res.json({ results });
+    res.json({
+      providerStatus,
+      results
+    });
   } catch (error) {
     res.status(400).json({ message: error instanceof Error ? error.message : "No se pudo procesar OCR." });
   }

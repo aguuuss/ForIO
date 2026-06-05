@@ -1,6 +1,9 @@
 import { DetectDocumentTextCommand, TextractClient } from "@aws-sdk/client-textract";
 import type { Block } from "@aws-sdk/client-textract";
 import { createWorker } from "tesseract.js";
+import type { SessionUser } from "./types.js";
+
+export type OcrProviderName = "tesseract" | "aws-textract";
 
 export type OcrBlock = {
   id?: string;
@@ -15,7 +18,8 @@ export type OcrResult = {
   lines: string[];
   blocks?: OcrBlock[];
   confidence?: number;
-  provider: "tesseract" | "aws-textract";
+  provider: OcrProviderName;
+  usedFallback?: boolean;
 };
 
 export interface OcrProvider {
@@ -23,18 +27,45 @@ export interface OcrProvider {
 }
 
 export function getOcrProviderName() {
-  return process.env.OCR_PROVIDER ?? "tesseract";
+  return (process.env.OCR_PROVIDER ?? "tesseract") as OcrProviderName;
 }
 
-export function getOcrStatus() {
-  const provider = getOcrProviderName();
-  const missingAwsCredentials = ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_REGION"].filter((key) => !process.env[key]);
+function getMissingAwsCredentials() {
+  return ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_REGION"].filter((key) => !process.env[key]);
+}
+
+export function canUseAwsTextract(user?: Pick<SessionUser, "role" | "status"> | null) {
+  return user?.status === "active" && user.role === "admin";
+}
+
+export function getEffectiveOcrProvider(user?: Pick<SessionUser, "role" | "status"> | null): OcrProviderName {
+  const configuredProvider = getOcrProviderName();
+  if (configuredProvider !== "aws-textract") {
+    return "tesseract";
+  }
+
+  if (!canUseAwsTextract(user)) {
+    return "tesseract";
+  }
+
+  return getMissingAwsCredentials().length === 0 ? "aws-textract" : "tesseract";
+}
+
+export function getOcrStatus(user?: Pick<SessionUser, "role" | "status"> | null) {
+  const configuredProvider = getOcrProviderName();
+  const missingAwsCredentials = getMissingAwsCredentials();
+  const canUseAws = canUseAwsTextract(user);
+  const effectiveProvider = getEffectiveOcrProvider(user);
 
   return {
-    provider,
+    configuredProvider,
+    effectiveProvider,
+    provider: effectiveProvider,
+    canUseAwsTextract: canUseAws,
+    awsReservedToAdmins: true,
     fallbackToTesseract: process.env.OCR_FALLBACK_TO_TESSERACT === "true",
-    awsTextractReady: provider !== "aws-textract" || missingAwsCredentials.length === 0,
-    missingAwsCredentials: provider === "aws-textract" ? missingAwsCredentials : []
+    awsTextractReady: configuredProvider !== "aws-textract" || missingAwsCredentials.length === 0,
+    missingAwsCredentials: configuredProvider === "aws-textract" ? missingAwsCredentials : []
   };
 }
 
@@ -115,10 +146,7 @@ class FallbackOcrProvider implements OcrProvider {
       const fallbackResult = await this.fallback.recognize(image);
       return {
         ...fallbackResult,
-        text: fallbackResult.text,
-        lines: fallbackResult.lines,
-        blocks: fallbackResult.blocks,
-        confidence: fallbackResult.confidence
+        usedFallback: true
       };
     }
   }
@@ -141,14 +169,14 @@ function average(values: number[]) {
   return values.reduce((total, value) => total + value, 0) / values.length;
 }
 
-export function createOcrProvider(): OcrProvider {
-  const provider = getOcrProviderName();
+export function createOcrProviderForUser(user?: Pick<SessionUser, "role" | "status"> | null): OcrProvider {
+  const provider = getEffectiveOcrProvider(user);
 
   if (provider === "tesseract") {
     return new TesseractOcrProvider();
   }
 
-  if (provider === "aws-textract") {
+  if (provider === "aws-textract" && canUseAwsTextract(user)) {
     const awsProvider = new AwsTextractOcrProvider();
     if (process.env.OCR_FALLBACK_TO_TESSERACT === "true") {
       return new FallbackOcrProvider(awsProvider, new TesseractOcrProvider());
