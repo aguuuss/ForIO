@@ -1,5 +1,7 @@
 import type { Question, QuestionInput } from "./types/questions";
 
+const API_BASE_URL = (import.meta.env.VITE_API_URL ?? "").replace(/\/$/, "");
+
 export type OcrUploadResult = {
   filename: string;
   provider: string;
@@ -25,8 +27,12 @@ export type OcrStatus = {
   ocrAccessTokenConfigured: boolean;
 };
 
+function apiUrl(path: string) {
+  return `${API_BASE_URL}${path}`;
+}
+
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
-  const response = await fetch(url, {
+  const response = await fetch(apiUrl(url), {
     headers: { "Content-Type": "application/json" },
     ...options
   });
@@ -83,7 +89,7 @@ export async function uploadOcrImages(files: File[], ocrToken = "") {
     formData.append("images", file);
   }
 
-  const response = await fetch("/api/ocr/upload", {
+  const response = await fetch(apiUrl("/api/ocr/upload"), {
     method: "POST",
     headers: token ? { "X-OCR-Token": token } : undefined,
     body: formData

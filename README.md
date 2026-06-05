@@ -43,6 +43,14 @@ Esto levanta:
 
 Vite proxya `/api` hacia el backend, asi que desde el frontend alcanza con pedir `/api/questions`.
 
+Si desplegas frontend y backend como servicios separados, configura en el frontend:
+
+```bash
+VITE_API_URL=https://url-de-tu-backend
+```
+
+Sin `VITE_API_URL`, el frontend usa rutas relativas `/api`, que sirven para desarrollo local o despliegues con proxy al backend.
+
 ## Scripts utiles
 
 ```bash
