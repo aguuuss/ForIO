@@ -175,6 +175,36 @@ h2 {
   box-shadow: 0 0 0 3px rgba(36, 84, 214, 0.12);
 }
 
+.matching-dropdown {
+  display: grid;
+  gap: 8px;
+}
+
+.matching-row {
+  align-items: center;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(120px, 0.6fr) minmax(180px, 1fr) 28px;
+}
+
+.matching-label {
+  color: #111827;
+  font-weight: 900;
+  overflow-wrap: anywhere;
+}
+
+.matching-result.correct {
+  color: #16a34a;
+}
+
+.matching-result.incorrect {
+  color: #dc2626;
+}
+
+.numeric-answer-field {
+  max-width: 720px;
+}
+
 .sentence {
   background: #f8fafc;
   border: 1px solid #d8e0ed;
@@ -718,6 +748,18 @@ small {
   overflow-wrap: anywhere;
 }
 
+.matching-editor-list {
+  display: grid;
+  gap: 8px;
+}
+
+.matching-editor-row {
+  align-items: start;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 40px;
+}
+
 .dimension-grid {
   display: grid;
   gap: 12px;
@@ -952,6 +994,15 @@ small {
   .sticky-save {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .matching-row,
+  .matching-editor-row {
+    grid-template-columns: 1fr;
+  }
+
+  .matching-result {
+    justify-self: start;
   }
 }
 

@@ -33,7 +33,10 @@ import TableDragDropAnswer, { cellKey } from "./components/TableDragDropAnswer";
 import type {
   DragAndDropQuestion,
   DragTable,
+  MatchingDropdownQuestion,
+  MatchingPair,
   MultipleChoiceQuestion,
+  NumericAnswerQuestion,
   Question,
   QuestionInput,
   QuestionType,
@@ -60,6 +63,23 @@ const emptyTable: Omit<TableDragAndDropQuestion, "id"> = {
   statement: "",
   table: makeEmptyTable(3, 3),
   draggableOptions: ["", "", ""]
+};
+
+const emptyMatching: Omit<MatchingDropdownQuestion, "id"> = {
+  type: "matching_dropdown",
+  statement: "",
+  pairs: [
+    { label: "", correctAnswer: "" },
+    { label: "", correctAnswer: "" }
+  ],
+  options: ["", ""]
+};
+
+const emptyNumeric: Omit<NumericAnswerQuestion, "id"> = {
+  type: "numeric_answer",
+  statement: "",
+  correctAnswer: "",
+  acceptedAnswers: []
 };
 
 const OCR_TOKEN_STORAGE_KEY = "forio-ocr-token";
@@ -111,6 +131,65 @@ function normalizeAnswer(value = "") {
 function isAcceptedTableAnswer(answer = "", correctAnswer = "", acceptedAnswers: string[] = []) {
   const normalizedAnswer = normalizeAnswer(answer);
   return [correctAnswer, ...acceptedAnswers].some((accepted) => normalizeAnswer(accepted) === normalizedAnswer);
+}
+
+function matchingKey(index: number) {
+  return `match-${index}`;
+}
+
+function evaluateMatchingAnswers(question: MatchingDropdownQuestion, answers: Record<string, string>) {
+  return Object.fromEntries(
+    question.pairs.map((pair, index) => [matchingKey(index), normalizeAnswer(answers[matchingKey(index)]) === normalizeAnswer(pair.correctAnswer)])
+  );
+}
+
+function matchingCorrectText(question: MatchingDropdownQuestion) {
+  return question.pairs.map((pair) => `${pair.label}: ${pair.correctAnswer}`).join(" / ");
+}
+
+function isAcceptedTextAnswer(answer = "", correctAnswer = "", acceptedAnswers: string[] = []) {
+  const normalizedAnswer = normalizeAnswer(answer);
+  return [correctAnswer, ...acceptedAnswers].some((accepted) => normalizeAnswer(accepted) === normalizedAnswer);
+}
+
+function numericCorrectText(question: NumericAnswerQuestion) {
+  return [question.correctAnswer, ...(question.acceptedAnswers ?? [])].filter(Boolean).join(" / ");
+}
+
+function examAnswerText(question: Question, answer: ExamAnswer | null, tableResults?: Record<string, boolean>) {
+  if (!answer) {
+    return "Sin respuesta";
+  }
+  if (answer.type === "multiple_choice") {
+    return answer.selected;
+  }
+  if (answer.type === "drag_and_drop") {
+    return answer.answers.join(" / ");
+  }
+  if (answer.type === "table_drag_and_drop" && question.type === "table_drag_and_drop") {
+    return tableBlankCells(question.table)
+      .map((cell) => {
+        const key = cellKey(cell.row, cell.col);
+        const val = answer.answers[key];
+        const ok = tableResults?.[key];
+        return `(${cell.row + 1},${cell.col + 1}) ${val ?? "—"}${ok !== undefined ? (ok ? " ✓" : " ✗") : ""}`;
+      })
+      .join(" / ");
+  }
+  if (answer.type === "matching_dropdown" && question.type === "matching_dropdown") {
+    return question.pairs
+      .map((pair, pairIndex) => {
+        const key = matchingKey(pairIndex);
+        const val = answer.answers[key];
+        const ok = tableResults?.[key];
+        return `${pair.label}: ${val ?? "—"}${ok !== undefined ? (ok ? " ✓" : " ✗") : ""}`;
+      })
+      .join(" / ");
+  }
+  if (answer.type === "numeric_answer") {
+    return answer.answer;
+  }
+  return "Sin respuesta";
 }
 
 function normalizeQuestionInput(question: QuestionInput): QuestionInput {
@@ -254,7 +333,9 @@ const EXAM_QUESTION_COUNT = 50;
 type ExamAnswer =
   | { type: "multiple_choice"; selected: string }
   | { type: "drag_and_drop"; answers: string[] }
-  | { type: "table_drag_and_drop"; answers: Record<string, string> };
+  | { type: "table_drag_and_drop"; answers: Record<string, string> }
+  | { type: "matching_dropdown"; answers: Record<string, string> }
+  | { type: "numeric_answer"; answer: string };
 
 type ExamQuestionResult = {
   question: Question;
@@ -293,6 +374,13 @@ function evaluateExamAnswer(question: Question, answer: ExamAnswer | null): { is
     );
     return { isCorrect: Object.values(tableResults).every(Boolean), tableResults };
   }
+  if (question.type === "matching_dropdown" && answer.type === "matching_dropdown") {
+    const tableResults = evaluateMatchingAnswers(question, answer.answers);
+    return { isCorrect: Object.values(tableResults).every(Boolean), tableResults };
+  }
+  if (question.type === "numeric_answer" && answer.type === "numeric_answer") {
+    return { isCorrect: isAcceptedTextAnswer(answer.answer, question.correctAnswer, question.acceptedAnswers) };
+  }
   return { isCorrect: false };
 }
 
@@ -305,6 +393,8 @@ function ExamPage({ questions }: { questions: Question[] }) {
   const [selected, setSelected] = useState("");
   const [dndAnswers, setDndAnswers] = useState<string[]>([]);
   const [tableAnswers, setTableAnswers] = useState<Record<string, string>>({});
+  const [matchingAnswers, setMatchingAnswers] = useState<Record<string, string>>({});
+  const [numericAnswer, setNumericAnswer] = useState("");
   const [checked, setChecked] = useState<null | boolean>(null);
   const [currentTableResults, setCurrentTableResults] = useState<Record<string, boolean>>({});
 
@@ -312,6 +402,8 @@ function ExamPage({ questions }: { questions: Question[] }) {
     setSelected("");
     setDndAnswers([]);
     setTableAnswers({});
+    setMatchingAnswers({});
+    setNumericAnswer("");
     setChecked(null);
     setCurrentTableResults({});
   }
@@ -341,7 +433,13 @@ function ExamPage({ questions }: { questions: Question[] }) {
     if (question.type === "drag_and_drop") {
       return dndAnswers.length > 0 ? { type: "drag_and_drop", answers: dndAnswers } : null;
     }
-    return Object.keys(tableAnswers).length > 0 ? { type: "table_drag_and_drop", answers: tableAnswers } : null;
+    if (question.type === "table_drag_and_drop") {
+      return Object.keys(tableAnswers).length > 0 ? { type: "table_drag_and_drop", answers: tableAnswers } : null;
+    }
+    if (question.type === "matching_dropdown") {
+      return Object.keys(matchingAnswers).length > 0 ? { type: "matching_dropdown", answers: matchingAnswers } : null;
+    }
+    return numericAnswer.trim() ? { type: "numeric_answer", answer: numericAnswer } : null;
   }
 
   function validate() {
@@ -466,7 +564,11 @@ function ExamPage({ questions }: { questions: Question[] }) {
       ? Boolean(selected)
       : question.type === "drag_and_drop"
         ? dndAnswers.filter(Boolean).length === question.correctAnswers.length
-        : tableBlankCells(question.table).every((cell) => Boolean(tableAnswers[cellKey(cell.row, cell.col)]));
+        : question.type === "table_drag_and_drop"
+          ? tableBlankCells(question.table).every((cell) => Boolean(tableAnswers[cellKey(cell.row, cell.col)]))
+          : question.type === "matching_dropdown"
+            ? question.pairs.every((_, pairIndex) => Boolean(matchingAnswers[matchingKey(pairIndex)]))
+            : Boolean(numericAnswer.trim());
 
   const progress = (index / total) * 100;
 
@@ -510,7 +612,7 @@ function ExamPage({ questions }: { questions: Question[] }) {
             disabled={checked !== null}
             onChange={setDndAnswers}
           />
-        ) : (
+        ) : question.type === "table_drag_and_drop" ? (
           <TableDragDropAnswer
             key={question.id}
             table={question.table}
@@ -519,6 +621,16 @@ function ExamPage({ questions }: { questions: Question[] }) {
             results={checked !== null ? currentTableResults : undefined}
             onChange={setTableAnswers}
           />
+        ) : question.type === "matching_dropdown" ? (
+          <MatchingDropdownAnswer
+            question={question}
+            answers={matchingAnswers}
+            disabled={checked !== null}
+            results={checked !== null ? currentTableResults : undefined}
+            onChange={setMatchingAnswers}
+          />
+        ) : (
+          <NumericAnswerInput value={numericAnswer} disabled={checked !== null} onChange={setNumericAnswer} />
         )}
 
         {checked !== null ? <Feedback question={question} isCorrect={checked} /> : null}
@@ -553,25 +665,15 @@ function ExamResultItem({ index, result }: { index: number; result: ExamQuestion
       ? question.correctAnswer
       : question.type === "drag_and_drop"
         ? question.correctAnswers.join(" / ")
-        : tableBlankCells(question.table)
-            .map((cell) => `(${cell.row + 1},${cell.col + 1}) ${[cell.correctAnswer, ...(cell.acceptedAnswers ?? [])].filter(Boolean).join(" o ")}`)
-            .join(" / ");
+        : question.type === "table_drag_and_drop"
+          ? tableBlankCells(question.table)
+              .map((cell) => `(${cell.row + 1},${cell.col + 1}) ${[cell.correctAnswer, ...(cell.acceptedAnswers ?? [])].filter(Boolean).join(" o ")}`)
+              .join(" / ")
+          : question.type === "matching_dropdown"
+            ? matchingCorrectText(question)
+            : numericCorrectText(question);
 
-  const userAnswerText =
-    answer === null
-      ? "Sin respuesta"
-      : answer.type === "multiple_choice"
-        ? answer.selected
-        : answer.type === "drag_and_drop"
-          ? answer.answers.join(" / ")
-          : tableBlankCells((question as TableDragAndDropQuestion).table)
-              .map((cell) => {
-                const key = cellKey(cell.row, cell.col);
-                const val = (answer as { type: "table_drag_and_drop"; answers: Record<string, string> }).answers[key];
-                const ok = tableResults?.[key];
-                return `(${cell.row + 1},${cell.col + 1}) ${val ?? "—"}${ok !== undefined ? (ok ? " ✓" : " ✗") : ""}`;
-              })
-              .join(" / ");
+  const userAnswerText = examAnswerText(question, answer, tableResults);
 
   return (
     <article className={`exam-review-item ${isCorrect ? "review-correct" : "review-incorrect"}`}>
@@ -605,6 +707,8 @@ function PracticePage({ questions }: { questions: Question[] }) {
   const [selected, setSelected] = useState("");
   const [dndAnswers, setDndAnswers] = useState<string[]>([]);
   const [tableAnswers, setTableAnswers] = useState<Record<string, string>>({});
+  const [matchingAnswers, setMatchingAnswers] = useState<Record<string, string>>({});
+  const [numericAnswer, setNumericAnswer] = useState("");
   const [tableResults, setTableResults] = useState<Record<string, boolean>>({});
   const [checked, setChecked] = useState<null | boolean>(null);
   const activeQuestions = practiceQuestions ?? [];
@@ -615,6 +719,8 @@ function PracticePage({ questions }: { questions: Question[] }) {
     setSelected("");
     setDndAnswers([]);
     setTableAnswers({});
+    setMatchingAnswers({});
+    setNumericAnswer("");
     setTableResults({});
     setChecked(null);
   }
@@ -660,6 +766,14 @@ function PracticePage({ questions }: { questions: Question[] }) {
       );
       setTableResults(results);
       isCorrect = Object.values(results).every(Boolean);
+    }
+    if (question.type === "matching_dropdown") {
+      const results = evaluateMatchingAnswers(question, matchingAnswers);
+      setTableResults(results);
+      isCorrect = Object.values(results).every(Boolean);
+    }
+    if (question.type === "numeric_answer") {
+      isCorrect = isAcceptedTextAnswer(numericAnswer, question.correctAnswer, question.acceptedAnswers);
     }
 
     setChecked(isCorrect);
@@ -710,7 +824,11 @@ function PracticePage({ questions }: { questions: Question[] }) {
       ? Boolean(selected)
       : question.type === "drag_and_drop"
         ? dndAnswers.filter(Boolean).length === question.correctAnswers.length
-        : tableBlankCells(question.table).every((cell) => Boolean(tableAnswers[cellKey(cell.row, cell.col)]));
+        : question.type === "table_drag_and_drop"
+          ? tableBlankCells(question.table).every((cell) => Boolean(tableAnswers[cellKey(cell.row, cell.col)]))
+          : question.type === "matching_dropdown"
+            ? question.pairs.every((_, pairIndex) => Boolean(matchingAnswers[matchingKey(pairIndex)]))
+            : Boolean(numericAnswer.trim());
 
   return (
     <main className="main">
@@ -746,7 +864,7 @@ function PracticePage({ questions }: { questions: Question[] }) {
             disabled={checked !== null}
             onChange={setDndAnswers}
           />
-        ) : (
+        ) : question.type === "table_drag_and_drop" ? (
           <TableDragDropAnswer
             key={question.id}
             table={question.table}
@@ -755,6 +873,16 @@ function PracticePage({ questions }: { questions: Question[] }) {
             results={checked !== null ? tableResults : undefined}
             onChange={setTableAnswers}
           />
+        ) : question.type === "matching_dropdown" ? (
+          <MatchingDropdownAnswer
+            question={question}
+            answers={matchingAnswers}
+            disabled={checked !== null}
+            results={checked !== null ? tableResults : undefined}
+            onChange={setMatchingAnswers}
+          />
+        ) : (
+          <NumericAnswerInput value={numericAnswer} disabled={checked !== null} onChange={setNumericAnswer} />
         )}
 
         {checked !== null ? <Feedback question={question} isCorrect={checked} /> : null}
@@ -781,15 +909,84 @@ function PracticePage({ questions }: { questions: Question[] }) {
   );
 }
 
+function MatchingDropdownAnswer({
+  question,
+  answers,
+  disabled,
+  results,
+  onChange
+}: {
+  question: MatchingDropdownQuestion;
+  answers: Record<string, string>;
+  disabled?: boolean;
+  results?: Record<string, boolean>;
+  onChange: (answers: Record<string, string>) => void;
+}) {
+  function updateAnswer(pairIndex: number, answer: string) {
+    onChange({
+      ...answers,
+      [matchingKey(pairIndex)]: answer
+    });
+  }
+
+  return (
+    <div className="matching-dropdown">
+      {question.pairs.map((pair, pairIndex) => {
+        const key = matchingKey(pairIndex);
+        const result = results?.[key];
+        return (
+          <div className="matching-row" key={`${pair.label}-${pairIndex}`}>
+            <span className="matching-label">{pair.label}</span>
+            <select disabled={disabled} value={answers[key] ?? ""} onChange={(event) => updateAnswer(pairIndex, event.target.value)}>
+              <option value="">Elegir...</option>
+              {question.options.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+            {result === undefined ? null : result ? (
+              <CheckCircle2 className="matching-result correct" size={22} />
+            ) : (
+              <XCircle className="matching-result incorrect" size={22} />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function NumericAnswerInput({
+  value,
+  disabled,
+  onChange
+}: {
+  value: string;
+  disabled?: boolean;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className="numeric-answer-field">
+      Respuesta
+      <input disabled={disabled} inputMode="decimal" value={value} onChange={(event) => onChange(event.target.value)} placeholder="Escribi la respuesta" />
+    </label>
+  );
+}
+
 function Feedback({ question, isCorrect }: { question: Question; isCorrect: boolean }) {
   const correctText =
     question.type === "multiple_choice"
       ? question.correctAnswer
       : question.type === "drag_and_drop"
         ? question.correctAnswers.join(" / ")
-        : tableBlankCells(question.table)
-            .map((cell) => `(${cell.row + 1},${cell.col + 1}) ${[cell.correctAnswer, ...(cell.acceptedAnswers ?? [])].filter(Boolean).join(" o ")}`)
-            .join(" / ");
+        : question.type === "table_drag_and_drop"
+          ? tableBlankCells(question.table)
+              .map((cell) => `(${cell.row + 1},${cell.col + 1}) ${[cell.correctAnswer, ...(cell.acceptedAnswers ?? [])].filter(Boolean).join(" o ")}`)
+              .join(" / ")
+          : question.type === "matching_dropdown"
+            ? matchingCorrectText(question)
+            : numericCorrectText(question);
   return (
     <div className={`feedback ${isCorrect ? "correct" : "incorrect"}`}>
       {isCorrect ? <CheckCircle2 size={22} /> : <XCircle size={22} />}
@@ -853,6 +1050,12 @@ function PracticePicker({ questions, onStart }: { questions: Question[]; onStart
           </button>
           <button className="ghost-button" type="button" onClick={() => selectByType("table_drag_and_drop")}>
             Tablas
+          </button>
+          <button className="ghost-button" type="button" onClick={() => selectByType("matching_dropdown")}>
+            Dropdowns
+          </button>
+          <button className="ghost-button" type="button" onClick={() => selectByType("numeric_answer")}>
+            Respuestas
           </button>
           <button className="ghost-button" type="button" onClick={() => setSelectedIds([])}>
             Ninguna
@@ -1320,7 +1523,36 @@ function ImportDraftEditor({
   const blankCount =
     question.type === "drag_and_drop" ? question.textParts.filter((part) => part === "__blank__").length : 0;
 
-  function setType(nextType: QuestionType) {
+  function sourceOptions() {
+    if (question.type === "multiple_choice") {
+      return question.options;
+    }
+    if (question.type === "drag_and_drop" || question.type === "table_drag_and_drop") {
+      return question.draggableOptions;
+    }
+    if (question.type === "matching_dropdown") {
+      return question.options;
+    }
+    return [question.correctAnswer, ...(question.acceptedAnswers ?? [])].filter(Boolean);
+  }
+
+  function firstDetectedAnswer() {
+    if (question.type === "multiple_choice") {
+      return question.correctAnswer;
+    }
+    if (question.type === "drag_and_drop") {
+      return question.correctAnswers[0] ?? "";
+    }
+    if (question.type === "table_drag_and_drop") {
+      return tableBlankCells(question.table)[0]?.correctAnswer ?? "";
+    }
+    if (question.type === "matching_dropdown") {
+      return question.pairs[0]?.correctAnswer ?? "";
+    }
+    return question.correctAnswer;
+  }
+
+  function setType(nextType: "multiple_choice" | "drag_and_drop" | "table_drag_and_drop") {
     if (nextType === question.type) {
       return;
     }
@@ -1329,41 +1561,31 @@ function ImportDraftEditor({
       onChange({
         type: "multiple_choice",
         statement: question.statement,
-        options: question.type === "multiple_choice" ? question.options : question.draggableOptions,
-        correctAnswer:
-          question.type === "multiple_choice"
-            ? question.correctAnswer
-            : question.type === "drag_and_drop"
-              ? question.correctAnswers[0] ?? ""
-              : tableBlankCells(question.table)[0]?.correctAnswer ?? "",
+        options: sourceOptions(),
+        correctAnswer: firstDetectedAnswer(),
         ocrText: draft.text
       });
       return;
     }
 
     if (nextType === "table_drag_and_drop") {
-      const sourceOptions = question.type === "multiple_choice" ? question.options : question.draggableOptions;
+      const options = sourceOptions();
       onChange({
         type: "table_drag_and_drop",
         statement: question.statement,
         table: makeEmptyTable(4, 4),
-        draggableOptions: sourceOptions.length > 0 ? sourceOptions : ["By", "Vector Base", "costo de oportunidad", "valor marginal"],
+        draggableOptions: options.length > 0 ? options : ["By", "Vector Base", "costo de oportunidad", "valor marginal"],
         ocrText: draft.text
       });
       return;
     }
 
-    const answer =
-      question.type === "multiple_choice"
-        ? question.correctAnswer
-        : question.type === "drag_and_drop"
-          ? question.correctAnswers[0] ?? ""
-          : tableBlankCells(question.table)[0]?.correctAnswer ?? "";
+    const answer = firstDetectedAnswer();
     onChange({
       type: "drag_and_drop",
       statement: question.statement,
       textParts: [question.statement, "__blank__"],
-      draggableOptions: question.type === "multiple_choice" ? question.options : question.draggableOptions,
+      draggableOptions: sourceOptions(),
       correctAnswers: [answer],
       ocrText: draft.text
     });
@@ -1489,14 +1711,14 @@ function ImportDraftEditor({
           </div>
           <DragPreview question={question} onChange={onChange} ocrText={draft.text} />
         </>
-      ) : (
+      ) : question.type === "table_drag_and_drop" ? (
         <TableQuestionEditor
           table={question.table}
           options={question.draggableOptions}
           onTableChange={(table) => onChange({ ...question, table, ocrText: draft.text })}
           onOptionsChange={(draggableOptions) => onChange({ ...question, draggableOptions, ocrText: draft.text })}
         />
-      )}
+      ) : null}
     </article>
   );
 }
@@ -1737,7 +1959,13 @@ function questionTypeLabel(type: QuestionType) {
   if (type === "drag_and_drop") {
     return "Drag and drop";
   }
-  return "Tabla drag";
+  if (type === "table_drag_and_drop") {
+    return "Tabla drag";
+  }
+  if (type === "matching_dropdown") {
+    return "Dropdown";
+  }
+  return "Respuesta";
 }
 
 function partialLabel(question: Question) {
@@ -1750,6 +1978,22 @@ function questionSearchText(question: Question) {
   }
   if (question.type === "drag_and_drop") {
     return [question.statement, question.type, question.partial ?? "", ...question.textParts, ...question.draggableOptions, ...question.correctAnswers]
+      .join(" ")
+      .toLowerCase();
+  }
+  if (question.type === "matching_dropdown") {
+    return [
+      question.statement,
+      question.type,
+      question.partial ?? "",
+      ...question.options,
+      ...question.pairs.flatMap((pair) => [pair.label, pair.correctAnswer])
+    ]
+      .join(" ")
+      .toLowerCase();
+  }
+  if (question.type === "numeric_answer") {
+    return [question.statement, question.type, question.partial ?? "", question.correctAnswer, ...(question.acceptedAnswers ?? [])]
       .join(" ")
       .toLowerCase();
   }
@@ -1775,6 +2019,10 @@ function AdminPage({ questions, onChange }: { questions: Question[]; onChange: (
   const [correctAnswers, setCorrectAnswers] = useState<string[]>(emptyDnd.correctAnswers);
   const [table, setTable] = useState<DragTable>(emptyTable.table);
   const [tableOptions, setTableOptions] = useState<string[]>(emptyTable.draggableOptions);
+  const [matchingPairs, setMatchingPairs] = useState<MatchingPair[]>(emptyMatching.pairs);
+  const [matchingOptions, setMatchingOptions] = useState<string[]>(emptyMatching.options);
+  const [numericCorrectAnswer, setNumericCorrectAnswer] = useState(emptyNumeric.correctAnswer);
+  const [numericAcceptedAnswers, setNumericAcceptedAnswers] = useState<string[]>(emptyNumeric.acceptedAnswers ?? []);
   const [partial, setPartial] = useState<Question["partial"] | "">("");
   const [message, setMessage] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
@@ -1805,9 +2053,18 @@ function AdminPage({ questions, onChange }: { questions: Question[]; onChange: (
       setTextPartsRaw("El __blank__ se visualiza en la linea de optimalidad");
       setDraggableOptions(["", "", ""]);
       setCorrectAnswers([""]);
-    } else {
+    } else if (nextType === "table_drag_and_drop") {
       setTable(makeEmptyTable(3, 3));
       setTableOptions(["", "", ""]);
+    } else if (nextType === "matching_dropdown") {
+      setMatchingPairs([
+        { label: "", correctAnswer: "" },
+        { label: "", correctAnswer: "" }
+      ]);
+      setMatchingOptions(["", ""]);
+    } else {
+      setNumericCorrectAnswer("");
+      setNumericAcceptedAnswers([]);
     }
   }
 
@@ -1824,9 +2081,17 @@ function AdminPage({ questions, onChange }: { questions: Question[]; onChange: (
       setTextPartsRaw(question.textParts.join(""));
       setDraggableOptions(question.draggableOptions);
       setCorrectAnswers(question.correctAnswers);
-    } else {
+    } else if (question.type === "table_drag_and_drop") {
       setTable(question.table);
       setTableOptions(question.draggableOptions);
+    } else if (question.type === "matching_dropdown") {
+      setMatchingPairs(question.pairs);
+      setMatchingOptions(question.options);
+      setNumericCorrectAnswer("");
+      setNumericAcceptedAnswers([]);
+    } else {
+      setNumericCorrectAnswer(question.correctAnswer);
+      setNumericAcceptedAnswers(question.acceptedAnswers ?? []);
     }
   }
 
@@ -1851,16 +2116,35 @@ function AdminPage({ questions, onChange }: { questions: Question[]; onChange: (
                 correctAnswers: cleanList(correctAnswers),
                 ...(partial ? { partial } : {})
               }
-            : {
-                type,
-                statement: statement.trim(),
-                table,
-                draggableOptions: cleanList([
-                  ...tableOptions,
-                  ...tableBlankCells(table).flatMap((cell) => [cell.correctAnswer ?? "", ...(cell.acceptedAnswers ?? [])])
-                ]),
-                ...(partial ? { partial } : {})
-              };
+            : type === "table_drag_and_drop"
+              ? {
+                  type,
+                  statement: statement.trim(),
+                  table,
+                  draggableOptions: cleanList([
+                    ...tableOptions,
+                    ...tableBlankCells(table).flatMap((cell) => [cell.correctAnswer ?? "", ...(cell.acceptedAnswers ?? [])])
+                  ]),
+                  ...(partial ? { partial } : {})
+                }
+              : type === "matching_dropdown"
+                ? {
+                    type,
+                    statement: statement.trim(),
+                    pairs: matchingPairs.map((pair) => ({
+                      label: pair.label.trim(),
+                      correctAnswer: pair.correctAnswer.trim()
+                    })),
+                    options: cleanList(matchingOptions),
+                    ...(partial ? { partial } : {})
+                  }
+                : {
+                  type,
+                  statement: statement.trim(),
+                  correctAnswer: numericCorrectAnswer.trim(),
+                  acceptedAnswers: cleanList(numericAcceptedAnswers),
+                  ...(partial ? { partial } : {})
+                };
 
       if (editingId) {
         await updateQuestion(editingId, normalizeQuestionInput(payload));
@@ -1905,6 +2189,12 @@ function AdminPage({ questions, onChange }: { questions: Question[]; onChange: (
           <button className={type === "table_drag_and_drop" ? "active" : ""} type="button" onClick={() => resetForm("table_drag_and_drop")}>
             Tabla
           </button>
+          <button className={type === "matching_dropdown" ? "active" : ""} type="button" onClick={() => resetForm("matching_dropdown")}>
+            Dropdown
+          </button>
+          <button className={type === "numeric_answer" ? "active" : ""} type="button" onClick={() => resetForm("numeric_answer")}>
+            Respuesta
+          </button>
         </div>
 
         <label>
@@ -1934,8 +2224,22 @@ function AdminPage({ questions, onChange }: { questions: Question[]; onChange: (
             onDraggableOptionsChange={setDraggableOptions}
             onCorrectAnswersChange={setCorrectAnswers}
           />
-        ) : (
+        ) : type === "table_drag_and_drop" ? (
           <TableQuestionEditor table={table} options={tableOptions} onTableChange={setTable} onOptionsChange={setTableOptions} />
+        ) : type === "matching_dropdown" ? (
+          <MatchingDropdownEditor
+            pairs={matchingPairs}
+            options={matchingOptions}
+            onPairsChange={setMatchingPairs}
+            onOptionsChange={setMatchingOptions}
+          />
+        ) : (
+          <NumericAnswerEditor
+            correctAnswer={numericCorrectAnswer}
+            acceptedAnswers={numericAcceptedAnswers}
+            onCorrectAnswerChange={setNumericCorrectAnswer}
+            onAcceptedAnswersChange={setNumericAcceptedAnswers}
+          />
         )}
 
         {message ? <p className="form-message">{message}</p> : null}
@@ -2018,6 +2322,105 @@ function MultipleChoiceEditor({
           </div>
         )}
       </div>
+    </>
+  );
+}
+
+function MatchingDropdownEditor({
+  pairs,
+  options,
+  onPairsChange,
+  onOptionsChange
+}: {
+  pairs: MatchingPair[];
+  options: string[];
+  onPairsChange: (pairs: MatchingPair[]) => void;
+  onOptionsChange: (options: string[]) => void;
+}) {
+  const selectableOptions = cleanList(options);
+
+  function updatePair(index: number, patch: Partial<MatchingPair>) {
+    onPairsChange(pairs.map((pair, pairIndex) => (pairIndex === index ? { ...pair, ...patch } : pair)));
+  }
+
+  function addPair() {
+    onPairsChange([...pairs, { label: "", correctAnswer: "" }]);
+  }
+
+  function removePair(index: number) {
+    if (pairs.length <= 2) {
+      updatePair(index, { label: "", correctAnswer: "" });
+      return;
+    }
+    onPairsChange(pairs.filter((_, pairIndex) => pairIndex !== index));
+  }
+
+  return (
+    <>
+      <ArrayEditor label="Opciones del dropdown" values={options} minItems={2} onChange={onOptionsChange} />
+
+      <div className="array-editor">
+        <div className="array-header">
+          <span>Relaciones</span>
+          <button className="ghost-button" type="button" onClick={addPair}>
+            <Plus size={16} />
+            Agregar
+          </button>
+        </div>
+        <div className="matching-editor-list">
+          {pairs.map((pair, index) => {
+            const selectOptions = pair.correctAnswer && !selectableOptions.includes(pair.correctAnswer)
+              ? [...selectableOptions, pair.correctAnswer]
+              : selectableOptions;
+            return (
+              <div className="matching-editor-row" key={index}>
+                <input value={pair.label} onChange={(event) => updatePair(index, { label: event.target.value })} placeholder="Termino" />
+                <select value={pair.correctAnswer} onChange={(event) => updatePair(index, { correctAnswer: event.target.value })}>
+                  <option value="">Respuesta correcta...</option>
+                  {selectOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+                <button className="icon-button danger" type="button" onClick={() => removePair(index)} aria-label="Quitar relacion">
+                  <Trash2 size={18} />
+                </button>
+              </div>
+            );
+          })}
+        </div>
+        <small>Carga las opciones una vez y despues elegi la correcta para cada fila.</small>
+      </div>
+    </>
+  );
+}
+
+function NumericAnswerEditor({
+  correctAnswer,
+  acceptedAnswers,
+  onCorrectAnswerChange,
+  onAcceptedAnswersChange
+}: {
+  correctAnswer: string;
+  acceptedAnswers: string[];
+  onCorrectAnswerChange: (answer: string) => void;
+  onAcceptedAnswersChange: (answers: string[]) => void;
+}) {
+  return (
+    <>
+      <label>
+        Respuesta correcta
+        <input value={correctAnswer} onChange={(event) => onCorrectAnswerChange(event.target.value)} placeholder="Ej: 10, 703, optimo" />
+      </label>
+      <ArrayEditor
+        label="Respuestas alternativas aceptadas"
+        values={acceptedAnswers.length > 0 ? acceptedAnswers : [""]}
+        minItems={1}
+        clearWhenMinReached
+        onChange={onAcceptedAnswersChange}
+      />
+      <small>La comparación ignora mayúsculas y espacios al inicio/final. Usá alternativas para aceptar formatos como 10, 10.0 o 10,00.</small>
     </>
   );
 }

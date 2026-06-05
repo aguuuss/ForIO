@@ -231,6 +231,34 @@ function validateQuestion(input: QuestionInput): string | null {
     return null;
   }
 
+  if (input.type === "matching_dropdown") {
+    if (!Array.isArray(input.pairs) || input.pairs.length < 2) {
+      return "Una pregunta matching_dropdown necesita al menos 2 relaciones.";
+    }
+    if (!Array.isArray(input.options) || input.options.length < 2) {
+      return "Una pregunta matching_dropdown necesita al menos 2 opciones.";
+    }
+    for (const pair of input.pairs) {
+      if (!pair.label?.trim() || !pair.correctAnswer?.trim()) {
+        return "Cada relacion necesita etiqueta y respuesta correcta.";
+      }
+      if (!input.options.includes(pair.correctAnswer)) {
+        return "Cada respuesta correcta debe estar incluida en las opciones del dropdown.";
+      }
+    }
+    return null;
+  }
+
+  if (input.type === "numeric_answer") {
+    if (!input.correctAnswer?.trim()) {
+      return "La respuesta correcta es obligatoria.";
+    }
+    if (input.acceptedAnswers && !Array.isArray(input.acceptedAnswers)) {
+      return "acceptedAnswers debe ser un array.";
+    }
+    return null;
+  }
+
   return "Tipo de pregunta no soportado.";
 }
 
