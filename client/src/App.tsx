@@ -146,21 +146,29 @@ type TableImportBuilder = {
   nextAnswerIndex: number;
 };
 
+type LoadQuestionsOptions = {
+  silent?: boolean;
+};
+
 export default function App() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [path, setPath] = useState(window.location.pathname);
 
-  async function loadQuestions() {
-    setLoading(true);
+  async function loadQuestions(options: LoadQuestionsOptions = {}) {
+    if (!options.silent) {
+      setLoading(true);
+    }
     setError("");
     try {
       setQuestions(await getQuestionsWithRetry());
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : "No se pudieron cargar las preguntas.");
     } finally {
-      setLoading(false);
+      if (!options.silent) {
+        setLoading(false);
+      }
     }
   }
 
@@ -221,17 +229,17 @@ export default function App() {
         <main className="main error-box">
           <h1>No pude cargar las preguntas</h1>
           <p>{error}</p>
-          <button className="primary-button" type="button" onClick={loadQuestions}>
+          <button className="primary-button" type="button" onClick={() => loadQuestions()}>
             <RotateCcw size={18} />
             Reintentar
           </button>
         </main>
       ) : null}
       {!loading && !error && path === "/admin/import" ? (
-        <ImportPage onSaved={loadQuestions} />
+        <ImportPage onSaved={() => loadQuestions({ silent: true })} />
       ) : null}
       {!loading && !error && path === "/admin" ? (
-        <AdminPage questions={questions} onChange={loadQuestions} />
+        <AdminPage questions={questions} onChange={() => loadQuestions({ silent: true })} />
       ) : null}
       {!loading && !error && path === "/exam" ? (
         <ExamPage questions={questions} />
