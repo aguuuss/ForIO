@@ -62,6 +62,8 @@ const emptyTable: Omit<TableDragAndDropQuestion, "id"> = {
   draggableOptions: ["", "", ""]
 };
 
+const OCR_TOKEN_STORAGE_KEY = "forio-ocr-token";
+
 function cleanList(values: string[]) {
   return values.map((value) => value.trim()).filter(Boolean);
 }
@@ -864,6 +866,7 @@ function ImportPage({ onSaved }: { onSaved: () => Promise<void> }) {
   const [message, setMessage] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const [ocrStatus, setOcrStatus] = useState<OcrStatus | null>(null);
+  const [ocrToken, setOcrToken] = useState(() => localStorage.getItem(OCR_TOKEN_STORAGE_KEY) ?? "");
   const [showTableBuilder, setShowTableBuilder] = useState(false);
   const [tableBuilder, setTableBuilder] = useState<TableImportBuilder>(() => ({
     statement: "",
@@ -878,6 +881,15 @@ function ImportPage({ onSaved }: { onSaved: () => Promise<void> }) {
       .then(setOcrStatus)
       .catch(() => setOcrStatus(null));
   }, []);
+
+  useEffect(() => {
+    const token = ocrToken.trim();
+    if (token) {
+      localStorage.setItem(OCR_TOKEN_STORAGE_KEY, token);
+    } else {
+      localStorage.removeItem(OCR_TOKEN_STORAGE_KEY);
+    }
+  }, [ocrToken]);
 
   useEffect(() => {
     function handlePaste(event: ClipboardEvent) {
@@ -904,7 +916,7 @@ function ImportPage({ onSaved }: { onSaved: () => Promise<void> }) {
     setBusy(true);
     setMessage("Procesando OCR...");
     try {
-      const response = await uploadOcrImages(imageFiles);
+      const response = await uploadOcrImages(imageFiles, ocrToken);
       const normalResults = response.results.filter((result) => result.parsedQuestion.type !== "table_drag_and_drop");
       const tableResults = response.results.filter((result) => result.parsedQuestion.type === "table_drag_and_drop");
 
@@ -1167,8 +1179,20 @@ function ImportPage({ onSaved }: { onSaved: () => Promise<void> }) {
             OCR activo: {ocrStatus.provider}
             {ocrStatus.fallbackToTesseract ? " con fallback a tesseract" : ""}
             {!ocrStatus.awsTextractReady ? `. Faltan: ${ocrStatus.missingAwsCredentials.join(", ")}` : ""}
+            {ocrStatus.ocrAccessTokenRequired && !ocrStatus.ocrAccessTokenConfigured ? ". Falta OCR_ACCESS_TOKEN" : ""}
           </p>
         ) : null}
+        <label className="ocr-token-field">
+          Token OCR
+          <input
+            autoComplete="off"
+            placeholder="Con token se habilita AWS Textract"
+            type="password"
+            value={ocrToken}
+            onChange={(event) => setOcrToken(event.target.value)}
+          />
+          <small>Se guarda solo en este navegador y se envia al backend al procesar capturas.</small>
+        </label>
         <p className="helper-text">El OCR no intenta ser perfecto: lee la imagen, propone una pregunta y deja todo editable.</p>
         {message ? <p className="form-message">{message}</p> : null}
       </section>

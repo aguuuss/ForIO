@@ -107,7 +107,10 @@ OCR_PROVIDER=aws-textract
 AWS_ACCESS_KEY_ID=tu_access_key
 AWS_SECRET_ACCESS_KEY=tu_secret_key
 AWS_REGION=us-east-1
+OCR_ACCESS_TOKEN=token_que_generas_para_usuarios
 ```
+
+Cuando `OCR_PROVIDER=aws-textract`, el backend exige el header `X-OCR-Token` en `POST /api/ocr/upload`. La pantalla `/admin/import` tiene un campo "Token OCR"; lo guarda en `localStorage` del navegador y lo envia automaticamente al procesar capturas.
 
 Fallback opcional a Tesseract si falla AWS Textract:
 

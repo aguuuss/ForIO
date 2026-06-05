@@ -21,6 +21,8 @@ export type OcrStatus = {
   fallbackToTesseract: boolean;
   awsTextractReady: boolean;
   missingAwsCredentials: string[];
+  ocrAccessTokenRequired: boolean;
+  ocrAccessTokenConfigured: boolean;
 };
 
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
@@ -74,14 +76,16 @@ export function getOcrStatus() {
   return request<OcrStatus>("/api/ocr/status");
 }
 
-export async function uploadOcrImages(files: File[]) {
+export async function uploadOcrImages(files: File[], ocrToken = "") {
   const formData = new FormData();
+  const token = ocrToken.trim();
   for (const file of files) {
     formData.append("images", file);
   }
 
   const response = await fetch("/api/ocr/upload", {
     method: "POST",
+    headers: token ? { "X-OCR-Token": token } : undefined,
     body: formData
   });
 

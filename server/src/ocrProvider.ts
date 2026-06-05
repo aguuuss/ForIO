@@ -29,12 +29,15 @@ export function getOcrProviderName() {
 export function getOcrStatus() {
   const provider = getOcrProviderName();
   const missingAwsCredentials = ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_REGION"].filter((key) => !process.env[key]);
+  const ocrAccessTokenRequired = provider === "aws-textract";
 
   return {
     provider,
     fallbackToTesseract: process.env.OCR_FALLBACK_TO_TESSERACT === "true",
     awsTextractReady: provider !== "aws-textract" || missingAwsCredentials.length === 0,
-    missingAwsCredentials: provider === "aws-textract" ? missingAwsCredentials : []
+    missingAwsCredentials: provider === "aws-textract" ? missingAwsCredentials : [],
+    ocrAccessTokenRequired,
+    ocrAccessTokenConfigured: !ocrAccessTokenRequired || Boolean(process.env.OCR_ACCESS_TOKEN?.trim())
   };
 }
 

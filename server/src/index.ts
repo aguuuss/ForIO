@@ -1,5 +1,6 @@
 import "./env.js";
 import cors from "cors";
+import { timingSafeEqual } from "node:crypto";
 import express from "express";
 import multer from "multer";
 import { createOcrProvider, getOcrStatus } from "./ocrProvider.js";
@@ -18,6 +19,38 @@ const upload = multer({
 
 app.use(cors());
 app.use(express.json({ limit: "2mb" }));
+
+function requireOcrAccessToken(req: express.Request, res: express.Response, next: express.NextFunction) {
+  const status = getOcrStatus();
+  if (status.provider !== "aws-textract") {
+    next();
+    return;
+  }
+
+  const expectedToken = process.env.OCR_ACCESS_TOKEN?.trim();
+  if (!expectedToken) {
+    res.status(503).json({ message: "Falta configurar OCR_ACCESS_TOKEN en el backend." });
+    return;
+  }
+
+  const providedToken = getSingleHeader(req.headers["x-ocr-token"])?.trim() ?? "";
+  if (!tokensMatch(expectedToken, providedToken)) {
+    res.status(401).json({ message: "Token OCR invalido." });
+    return;
+  }
+
+  next();
+}
+
+function getSingleHeader(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function tokensMatch(expectedToken: string, providedToken: string) {
+  const expected = Buffer.from(expectedToken);
+  const provided = Buffer.from(providedToken);
+  return expected.length === provided.length && timingSafeEqual(expected, provided);
+}
 
 app.get("/api/questions", async (_req, res, next) => {
   try {
@@ -54,7 +87,7 @@ app.post("/api/questions/bulk", async (req, res) => {
   }
 });
 
-app.post("/api/ocr/upload", upload.array("images"), async (req, res) => {
+app.post("/api/ocr/upload", requireOcrAccessToken, upload.array("images"), async (req, res) => {
   try {
     const files = req.files as Express.Multer.File[] | undefined;
     if (!files?.length) {
