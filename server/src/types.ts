@@ -1,4 +1,5 @@
 export type QuestionType = "multiple_choice" | "drag_and_drop" | "table_drag_and_drop";
+export type QuestionPartial = "2do parcial";
 
 export type TableCell = {
   row: number;
@@ -22,6 +23,7 @@ export type MultipleChoiceQuestion = {
   options: string[];
   correctAnswer: string;
   ocrText?: string;
+  partial?: QuestionPartial;
 };
 
 export type DragAndDropQuestion = {
@@ -32,6 +34,7 @@ export type DragAndDropQuestion = {
   draggableOptions: string[];
   correctAnswers: string[];
   ocrText?: string;
+  partial?: QuestionPartial;
 };
 
 export type TableDragAndDropQuestion = {
@@ -41,6 +44,7 @@ export type TableDragAndDropQuestion = {
   table: DragTable;
   draggableOptions: string[];
   ocrText?: string;
+  partial?: QuestionPartial;
 };
 
 export type Question = MultipleChoiceQuestion | DragAndDropQuestion | TableDragAndDropQuestion;

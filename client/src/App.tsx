@@ -63,6 +63,7 @@ const emptyTable: Omit<TableDragAndDropQuestion, "id"> = {
 };
 
 const OCR_TOKEN_STORAGE_KEY = "forio-ocr-token";
+const SECOND_PARTIAL = "2do parcial";
 
 function cleanList(values: string[]) {
   return values.map((value) => value.trim()).filter(Boolean);
@@ -124,7 +125,11 @@ function normalizeQuestionInput(question: QuestionInput): QuestionInput {
         ...tableBlankCells(question.table).flatMap((cell) => [cell.correctAnswer ?? "", ...(cell.acceptedAnswers ?? [])])
       ])
     };
-  }
+}
+
+function markQuestionAsSecondPartial(question: QuestionInput, enabled: boolean): QuestionInput {
+  return enabled ? { ...question, partial: SECOND_PARTIAL } : question;
+}
 
 type ImportDraft = OcrUploadResult & {
   id: string;
@@ -804,6 +809,10 @@ function PracticePicker({ questions, onStart }: { questions: Question[]; onStart
     setSelectedIds(questions.filter((question) => question.type === type).map((question) => question.id));
   }
 
+  function selectSecondPartial() {
+    setSelectedIds(questions.filter((question) => question.partial === SECOND_PARTIAL).map((question) => question.id));
+  }
+
   return (
     <main className="main practice-picker">
       <section className="quiz-card">
@@ -825,6 +834,9 @@ function PracticePicker({ questions, onStart }: { questions: Question[]; onStart
           <button className="ghost-button" type="button" onClick={() => setSelectedIds(questions.slice(60).map((question) => question.id))}>
             Sin unidades 1 y 2
           </button>
+          <button className="ghost-button" type="button" onClick={selectSecondPartial}>
+            2do parcial
+          </button>
           <button className="ghost-button" type="button" onClick={() => selectByType("multiple_choice")}>
             Multiple choice
           </button>
@@ -843,7 +855,10 @@ function PracticePicker({ questions, onStart }: { questions: Question[]; onStart
           {questions.map((question, questionIndex) => (
             <label className="picker-item" key={question.id}>
               <input checked={selectedIds.includes(question.id)} type="checkbox" onChange={() => toggleQuestion(question.id)} />
-              <span className="type-pill">{questionTypeLabel(question.type)}</span>
+              <span className="pill-group">
+                <span className="type-pill">{questionTypeLabel(question.type)}</span>
+                {partialLabel(question) ? <span className="partial-pill">{partialLabel(question)}</span> : null}
+              </span>
               <strong>{questionIndex + 1}.</strong>
               <span>{question.statement}</span>
             </label>
@@ -867,6 +882,7 @@ function ImportPage({ onSaved }: { onSaved: () => Promise<void> }) {
   const [isDragging, setIsDragging] = useState(false);
   const [ocrStatus, setOcrStatus] = useState<OcrStatus | null>(null);
   const [ocrToken, setOcrToken] = useState(() => localStorage.getItem(OCR_TOKEN_STORAGE_KEY) ?? "");
+  const [markAsSecondPartial, setMarkAsSecondPartial] = useState(true);
   const [showTableBuilder, setShowTableBuilder] = useState(false);
   const [tableBuilder, setTableBuilder] = useState<TableImportBuilder>(() => ({
     statement: "",
@@ -980,16 +996,21 @@ function ImportPage({ onSaved }: { onSaved: () => Promise<void> }) {
     setBusy(true);
     setMessage("");
     try {
-      const draftQuestions = drafts.map((draft) => normalizeQuestionInput({ ...draft.parsedQuestion, ocrText: draft.text }));
+      const draftQuestions = drafts.map((draft) =>
+        markQuestionAsSecondPartial(normalizeQuestionInput({ ...draft.parsedQuestion, ocrText: draft.text }), markAsSecondPartial)
+      );
       const questionsToSave = [...draftQuestions];
       if (showTableBuilder && tableBlankCells(tableBuilder.table).length > 0 && tableBuilder.statement.trim()) {
         questionsToSave.push(
-          normalizeQuestionInput({
-            type: "table_drag_and_drop",
-            statement: tableBuilder.statement.trim(),
-            table: tableBuilder.table,
-            draggableOptions: tableBuilder.options
-          })
+          markQuestionAsSecondPartial(
+            normalizeQuestionInput({
+              type: "table_drag_and_drop",
+              statement: tableBuilder.statement.trim(),
+              table: tableBuilder.table,
+              draggableOptions: tableBuilder.options
+            }),
+            markAsSecondPartial
+          )
         );
       }
       await createQuestionsBulk(questionsToSave);
@@ -1128,12 +1149,15 @@ function ImportPage({ onSaved }: { onSaved: () => Promise<void> }) {
     setMessage("");
     try {
       await createQuestionsBulk([
-        normalizeQuestionInput({
-          type: "table_drag_and_drop",
-          statement: tableBuilder.statement.trim(),
-          table: tableBuilder.table,
-          draggableOptions: tableBuilder.options
-        })
+        markQuestionAsSecondPartial(
+          normalizeQuestionInput({
+            type: "table_drag_and_drop",
+            statement: tableBuilder.statement.trim(),
+            table: tableBuilder.table,
+            draggableOptions: tableBuilder.options
+          }),
+          markAsSecondPartial
+        )
       ]);
       await onSaved();
       resetTableBuilder();
@@ -1192,6 +1216,10 @@ function ImportPage({ onSaved }: { onSaved: () => Promise<void> }) {
             onChange={(event) => setOcrToken(event.target.value)}
           />
           <small>Se guarda solo en este navegador y se envia al backend al procesar capturas.</small>
+        </label>
+        <label className="switch-row">
+          <input checked={markAsSecondPartial} type="checkbox" onChange={(event) => setMarkAsSecondPartial(event.target.checked)} />
+          <span>Marcar nuevas preguntas como 2do parcial</span>
         </label>
         <p className="helper-text">El OCR no intenta ser perfecto: lee la imagen, propone una pregunta y deja todo editable.</p>
         {message ? <p className="form-message">{message}</p> : null}
@@ -1702,16 +1730,23 @@ function questionTypeLabel(type: QuestionType) {
   return "Tabla drag";
 }
 
+function partialLabel(question: Question) {
+  return question.partial === SECOND_PARTIAL ? SECOND_PARTIAL : null;
+}
+
 function questionSearchText(question: Question) {
   if (question.type === "multiple_choice") {
-    return [question.statement, question.type, ...question.options, question.correctAnswer].join(" ").toLowerCase();
+    return [question.statement, question.type, question.partial ?? "", ...question.options, question.correctAnswer].join(" ").toLowerCase();
   }
   if (question.type === "drag_and_drop") {
-    return [question.statement, question.type, ...question.textParts, ...question.draggableOptions, ...question.correctAnswers].join(" ").toLowerCase();
+    return [question.statement, question.type, question.partial ?? "", ...question.textParts, ...question.draggableOptions, ...question.correctAnswers]
+      .join(" ")
+      .toLowerCase();
   }
   return [
     question.statement,
     question.type,
+    question.partial ?? "",
     ...question.draggableOptions,
     ...question.table.cells.flatMap((cell) => [cell.content, cell.correctAnswer ?? "", ...(cell.acceptedAnswers ?? [])])
   ]
@@ -1730,6 +1765,7 @@ function AdminPage({ questions, onChange }: { questions: Question[]; onChange: (
   const [correctAnswers, setCorrectAnswers] = useState<string[]>(emptyDnd.correctAnswers);
   const [table, setTable] = useState<DragTable>(emptyTable.table);
   const [tableOptions, setTableOptions] = useState<string[]>(emptyTable.draggableOptions);
+  const [partial, setPartial] = useState<Question["partial"] | "">("");
   const [message, setMessage] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -1750,6 +1786,7 @@ function AdminPage({ questions, onChange }: { questions: Question[]; onChange: (
     setEditingId(null);
     setType(nextType);
     setStatement("");
+    setPartial("");
     setMessage("");
     if (nextType === "multiple_choice") {
       setOptions(["", ""]);
@@ -1768,6 +1805,7 @@ function AdminPage({ questions, onChange }: { questions: Question[]; onChange: (
     setEditingId(question.id);
     setType(question.type);
     setStatement(question.statement);
+    setPartial(question.partial ?? "");
     setMessage("");
     if (question.type === "multiple_choice") {
       setOptions(question.options);
@@ -1791,7 +1829,8 @@ function AdminPage({ questions, onChange }: { questions: Question[]; onChange: (
               type,
               statement: statement.trim(),
               options: cleanList(options),
-              correctAnswer: correctAnswer.trim()
+              correctAnswer: correctAnswer.trim(),
+              ...(partial ? { partial } : {})
             }
           : type === "drag_and_drop"
             ? {
@@ -1799,7 +1838,8 @@ function AdminPage({ questions, onChange }: { questions: Question[]; onChange: (
                 statement: statement.trim(),
                 textParts: parseDragTextParts(textPartsRaw),
                 draggableOptions: cleanList(draggableOptions),
-                correctAnswers: cleanList(correctAnswers)
+                correctAnswers: cleanList(correctAnswers),
+                ...(partial ? { partial } : {})
               }
             : {
                 type,
@@ -1808,7 +1848,8 @@ function AdminPage({ questions, onChange }: { questions: Question[]; onChange: (
                 draggableOptions: cleanList([
                   ...tableOptions,
                   ...tableBlankCells(table).flatMap((cell) => [cell.correctAnswer ?? "", ...(cell.acceptedAnswers ?? [])])
-                ])
+                ]),
+                ...(partial ? { partial } : {})
               };
 
       if (editingId) {
@@ -1861,6 +1902,11 @@ function AdminPage({ questions, onChange }: { questions: Question[]; onChange: (
           <textarea value={statement} onChange={(event) => setStatement(event.target.value)} placeholder="Escribi la consigna..." />
         </label>
 
+        <label className="switch-row">
+          <input checked={partial === SECOND_PARTIAL} type="checkbox" onChange={(event) => setPartial(event.target.checked ? SECOND_PARTIAL : "")} />
+          <span>Marcar como 2do parcial</span>
+        </label>
+
         {type === "multiple_choice" ? (
           <MultipleChoiceEditor
             options={options}
@@ -1903,6 +1949,7 @@ function AdminPage({ questions, onChange }: { questions: Question[]; onChange: (
             <article className="question-item" key={question.id}>
               <div>
                 <span className="type-pill">{questionTypeLabel(question.type)}</span>
+                {partialLabel(question) ? <span className="partial-pill">{partialLabel(question)}</span> : null}
                 <h2>{question.statement}</h2>
               </div>
               <div className="item-actions">

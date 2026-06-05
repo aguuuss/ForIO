@@ -875,6 +875,39 @@ small {
   padding: 5px 9px;
 }
 
+.partial-pill {
+  background: #fff3d6;
+  border-radius: 999px;
+  color: #925400;
+  display: inline-flex;
+  font-size: 0.78rem;
+  font-weight: 900;
+  margin-left: 6px;
+  padding: 5px 9px;
+}
+
+.pill-group {
+  align-items: center;
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pill-group .partial-pill {
+  margin-left: 0;
+}
+
+.switch-row {
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+}
+
+.switch-row input {
+  width: auto;
+}
+
 .item-actions {
   gap: 8px;
 }
