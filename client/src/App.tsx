@@ -882,6 +882,7 @@ function ImportPage({ onSaved }: { onSaved: () => Promise<void> }) {
   const [isDragging, setIsDragging] = useState(false);
   const [ocrStatus, setOcrStatus] = useState<OcrStatus | null>(null);
   const [ocrToken, setOcrToken] = useState(() => localStorage.getItem(OCR_TOKEN_STORAGE_KEY) ?? "");
+  const ocrTokenRef = useRef(ocrToken);
   const [markAsSecondPartial, setMarkAsSecondPartial] = useState(true);
   const [showTableBuilder, setShowTableBuilder] = useState(false);
   const [tableBuilder, setTableBuilder] = useState<TableImportBuilder>(() => ({
@@ -899,6 +900,7 @@ function ImportPage({ onSaved }: { onSaved: () => Promise<void> }) {
   }, []);
 
   useEffect(() => {
+    ocrTokenRef.current = ocrToken;
     const token = ocrToken.trim();
     if (token) {
       localStorage.setItem(OCR_TOKEN_STORAGE_KEY, token);
@@ -915,14 +917,14 @@ function ImportPage({ onSaved }: { onSaved: () => Promise<void> }) {
       }
 
       event.preventDefault();
-      uploadFiles(files);
+      uploadFiles(files, ocrTokenRef.current);
     }
 
     window.addEventListener("paste", handlePaste);
     return () => window.removeEventListener("paste", handlePaste);
   }, []);
 
-  async function uploadFiles(files: File[] | FileList | null) {
+  async function uploadFiles(files: File[] | FileList | null, tokenOverride = ocrToken) {
     const imageFiles = Array.from(files ?? []).filter((file) => file.type.startsWith("image/"));
     if (!imageFiles.length) {
       setMessage("No encontre imagenes para importar.");
@@ -932,7 +934,7 @@ function ImportPage({ onSaved }: { onSaved: () => Promise<void> }) {
     setBusy(true);
     setMessage("Procesando OCR...");
     try {
-      const response = await uploadOcrImages(imageFiles, ocrToken);
+      const response = await uploadOcrImages(imageFiles, tokenOverride);
       const normalResults = response.results.filter((result) => result.parsedQuestion.type !== "table_drag_and_drop");
       const tableResults = response.results.filter((result) => result.parsedQuestion.type === "table_drag_and_drop");
 

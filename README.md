@@ -51,6 +51,16 @@ VITE_API_URL=https://url-de-tu-backend
 
 Sin `VITE_API_URL`, el frontend usa rutas relativas `/api`, que sirven para desarrollo local o despliegues con proxy al backend.
 
+## Persistencia en produccion
+
+En local, la API puede guardar en `server/data/questions.json`. En Vercel el filesystem es de solo lectura, por eso el backend necesita una base Postgres:
+
+```bash
+DATABASE_URL=postgres://...
+```
+
+Si `DATABASE_URL` existe, el backend crea automaticamente una tabla `app_state`, copia las preguntas incluidas en `server/data/questions.json` como seed inicial y guarda las altas/ediciones ahi.
+
 ## Scripts utiles
 
 ```bash
