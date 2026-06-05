@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import type { DragEvent } from "react";
 import {
   ArrowUp,
@@ -1991,6 +1991,7 @@ function MultipleChoiceEditor({
   onCorrectAnswerChange: (answer: string) => void;
 }) {
   const normalizedOptions = cleanList(options);
+  const radioGroupId = useId();
 
   return (
     <>
@@ -2007,7 +2008,7 @@ function MultipleChoiceEditor({
               <label className="mc-answer-item" key={`${option}-${index}`}>
                 <input
                   checked={correctAnswer === option}
-                  name="correct-answer"
+                  name={`correct-answer-${radioGroupId}`}
                   type="radio"
                   onChange={() => onCorrectAnswerChange(option)}
                 />
