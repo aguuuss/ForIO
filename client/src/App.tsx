@@ -726,13 +726,14 @@ function PracticePage({ questions }: { questions: Question[] }) {
   }
 
   function restart() {
+    setPracticeQuestions((current) => (current ? shuffleArray(current) : current));
     setIndex(0);
     setScore(0);
     resetAnswer();
   }
 
   function startPractice(nextQuestions: Question[]) {
-    setPracticeQuestions(nextQuestions);
+    setPracticeQuestions(shuffleArray(nextQuestions));
     setIndex(0);
     setScore(0);
     resetAnswer();
