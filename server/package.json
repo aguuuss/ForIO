@@ -7,6 +7,8 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
+    "import:md": "node ./scripts/import-md-questions.mjs",
+    "review:questions": "node ./scripts/review-question-overlaps.mjs",
     "restore-latest": "node ./scripts/restore-latest.mjs",
     "backup": "node ./scripts/create-backup.mjs"
   },
