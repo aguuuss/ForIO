@@ -329,6 +329,7 @@ export default function App() {
 }
 
 const EXAM_QUESTION_COUNT = 50;
+const PRACTICE_BLOCK_SIZE = 30;
 
 type ExamAnswer =
   | { type: "multiple_choice"; selected: string }
@@ -344,6 +345,16 @@ type ExamQuestionResult = {
   tableResults?: Record<string, boolean>;
 };
 
+type PracticeSession = {
+  selectedQuestions: Question[];
+  blocks: Question[][];
+  blockIndex: number;
+  queue: Question[];
+  masteredIds: string[];
+  attempts: number;
+  correctAttempts: number;
+};
+
 function shuffleArray<T>(array: T[]): T[] {
   const copy = [...array];
   for (let i = copy.length - 1; i > 0; i--) {
@@ -351,6 +362,70 @@ function shuffleArray<T>(array: T[]): T[] {
     [copy[i], copy[j]] = [copy[j], copy[i]];
   }
   return copy;
+}
+
+function chunkArray<T>(array: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let index = 0; index < array.length; index += size) {
+    chunks.push(array.slice(index, index + size));
+  }
+  return chunks;
+}
+
+function makePracticeSession(questions: Question[]): PracticeSession {
+  const selectedQuestions = shuffleArray(questions);
+  const blocks = chunkArray(selectedQuestions, PRACTICE_BLOCK_SIZE);
+  return {
+    selectedQuestions,
+    blocks,
+    blockIndex: 0,
+    queue: shuffleArray(blocks[0] ?? []),
+    masteredIds: [],
+    attempts: 0,
+    correctAttempts: 0
+  };
+}
+
+function reinsertPendingQuestion(queue: Question[], question: Question) {
+  const minIndex = queue.length > 0 ? 1 : 0;
+  const insertIndex = minIndex + Math.floor(Math.random() * (queue.length - minIndex + 1));
+  return [...queue.slice(0, insertIndex), question, ...queue.slice(insertIndex)];
+}
+
+function advancePracticeSession(session: PracticeSession, wasCorrect: boolean): PracticeSession {
+  const [currentQuestion, ...remainingQueue] = session.queue;
+  if (!currentQuestion) {
+    return session;
+  }
+
+  if (!wasCorrect) {
+    return {
+      ...session,
+      queue: reinsertPendingQuestion(remainingQueue, currentQuestion)
+    };
+  }
+
+  if (remainingQueue.length > 0) {
+    return {
+      ...session,
+      queue: remainingQueue
+    };
+  }
+
+  const nextBlockIndex = session.blockIndex + 1;
+  if (nextBlockIndex >= session.blocks.length) {
+    return {
+      ...session,
+      blockIndex: session.blocks.length,
+      queue: []
+    };
+  }
+
+  return {
+    ...session,
+    blockIndex: nextBlockIndex,
+    queue: shuffleArray(session.blocks[nextBlockIndex])
+  };
 }
 
 function evaluateExamAnswer(question: Question, answer: ExamAnswer | null): { isCorrect: boolean; tableResults?: Record<string, boolean> } {
@@ -701,9 +776,7 @@ function ExamResultItem({ index, result }: { index: number; result: ExamQuestion
 }
 
 function PracticePage({ questions }: { questions: Question[] }) {
-  const [practiceQuestions, setPracticeQuestions] = useState<Question[] | null>(null);
-  const [index, setIndex] = useState(0);
-  const [score, setScore] = useState(0);
+  const [practiceSession, setPracticeSession] = useState<PracticeSession | null>(null);
   const [selected, setSelected] = useState("");
   const [dndAnswers, setDndAnswers] = useState<string[]>([]);
   const [tableAnswers, setTableAnswers] = useState<Record<string, string>>({});
@@ -711,9 +784,12 @@ function PracticePage({ questions }: { questions: Question[] }) {
   const [numericAnswer, setNumericAnswer] = useState("");
   const [tableResults, setTableResults] = useState<Record<string, boolean>>({});
   const [checked, setChecked] = useState<null | boolean>(null);
-  const activeQuestions = practiceQuestions ?? [];
-  const question = activeQuestions[index];
-  const isFinished = index >= activeQuestions.length;
+  const activeBlock = practiceSession?.blocks[practiceSession.blockIndex] ?? [];
+  const question = practiceSession?.queue[0];
+  const totalBlocks = practiceSession?.blocks.length ?? 0;
+  const masteredInBlock = activeBlock.filter((item) => practiceSession?.masteredIds.includes(item.id)).length;
+  const isFinished = Boolean(practiceSession && practiceSession.blockIndex >= practiceSession.blocks.length);
+  const attemptNumber = practiceSession ? practiceSession.attempts + (checked === null && question ? 1 : 0) : 0;
 
   function resetAnswer() {
     setSelected("");
@@ -726,23 +802,17 @@ function PracticePage({ questions }: { questions: Question[] }) {
   }
 
   function restart() {
-    setPracticeQuestions((current) => (current ? shuffleArray(current) : current));
-    setIndex(0);
-    setScore(0);
+    setPracticeSession((current) => (current ? makePracticeSession(current.selectedQuestions) : current));
     resetAnswer();
   }
 
   function startPractice(nextQuestions: Question[]) {
-    setPracticeQuestions(shuffleArray(nextQuestions));
-    setIndex(0);
-    setScore(0);
+    setPracticeSession(makePracticeSession(nextQuestions));
     resetAnswer();
   }
 
   function backToPicker() {
-    setPracticeQuestions(null);
-    setIndex(0);
-    setScore(0);
+    setPracticeSession(null);
     resetAnswer();
   }
 
@@ -778,13 +848,22 @@ function PracticePage({ questions }: { questions: Question[] }) {
     }
 
     setChecked(isCorrect);
-    if (isCorrect) {
-      setScore((current) => current + 1);
-    }
+    setPracticeSession((current) => {
+      if (!current) {
+        return current;
+      }
+      const masteredIds = isCorrect && !current.masteredIds.includes(question.id) ? [...current.masteredIds, question.id] : current.masteredIds;
+      return {
+        ...current,
+        masteredIds,
+        attempts: current.attempts + 1,
+        correctAttempts: current.correctAttempts + (isCorrect ? 1 : 0)
+      };
+    });
   }
 
   function next() {
-    setIndex((current) => current + 1);
+    setPracticeSession((current) => (current && checked !== null ? advancePracticeSession(current, checked) : current));
     resetAnswer();
   }
 
@@ -797,24 +876,39 @@ function PracticePage({ questions }: { questions: Question[] }) {
     );
   }
 
-  if (!practiceQuestions) {
+  if (!practiceSession) {
     return <PracticePicker questions={questions} onStart={startPractice} />;
   }
 
   if (isFinished) {
+    const precision = practiceSession.attempts > 0 ? Math.round((practiceSession.correctAttempts / practiceSession.attempts) * 100) : 0;
     return (
       <main className="main result-panel">
         <h1>Resumen final</h1>
         <p className="score-big">
-          {score}/{activeQuestions.length}
+          {practiceSession.masteredIds.length}/{practiceSession.selectedQuestions.length}
         </p>
-        <p>Respondiste correctamente el {Math.round((score / activeQuestions.length) * 100)}%.</p>
+        <p>Dominaste todas las preguntas seleccionadas.</p>
+        <p>
+          Precisión {precision}% · {practiceSession.correctAttempts}/{practiceSession.attempts} intentos correctos
+        </p>
         <button className="primary-button" type="button" onClick={restart}>
           <RotateCcw size={18} />
-          Reiniciar quiz
+          Reiniciar práctica
         </button>
         <button className="ghost-button" type="button" onClick={backToPicker}>
           Elegir otras preguntas
+        </button>
+      </main>
+    );
+  }
+
+  if (!question) {
+    return (
+      <main className="main empty-state">
+        <h1>No hay pregunta activa</h1>
+        <button className="ghost-button" type="button" onClick={backToPicker}>
+          Elegir preguntas
         </button>
       </main>
     );
@@ -836,9 +930,15 @@ function PracticePage({ questions }: { questions: Question[] }) {
       <section className="quiz-card">
         <div className="quiz-meta">
           <span>
-            Pregunta {index + 1} de {activeQuestions.length}
+            Bloque {practiceSession.blockIndex + 1} de {totalBlocks} · Dominadas {masteredInBlock}/{activeBlock.length}
           </span>
-          <strong>Puntaje: {score}</strong>
+          <strong>Intento {attemptNumber}</strong>
+        </div>
+        <div className="quiz-meta">
+          <span>Total dominadas: {practiceSession.masteredIds.length}/{practiceSession.selectedQuestions.length}</span>
+          <strong>
+            Precisión: {practiceSession.attempts > 0 ? Math.round((practiceSession.correctAttempts / practiceSession.attempts) * 100) : 0}%
+          </strong>
         </div>
 
         <h1>{question.statement}</h1>
