@@ -61,6 +61,58 @@ DATABASE_URL=postgres://...
 
 Si `DATABASE_URL` existe, el backend crea automaticamente una tabla `app_state`, copia las preguntas incluidas en `server/data/questions.json` como seed inicial y guarda las altas/ediciones ahi.
 
+### Acceso directo a la base de produccion
+
+Las credenciales de produccion no se guardan en el repo. Para conectarte directo a la base, copia `DATABASE_URL` desde Vercel o Neon y exportala solo en tu terminal local:
+
+```bash
+export DATABASE_URL='postgres://usuario:password@host/db?sslmode=require'
+```
+
+Tambien podes cargarla sin que quede visible en pantalla:
+
+```bash
+echo "Pega DATABASE_URL y Enter:"
+read -rs DATABASE_URL
+export DATABASE_URL
+echo
+```
+
+La base guarda el estado de preguntas en una unica fila:
+
+- tabla: `app_state`
+- key: `questions`
+- value: array JSONB con todas las preguntas
+
+Scripts utiles contra produccion:
+
+```bash
+# Revisar coincidencias/duplicadas leyendo directamente DATABASE_URL
+npm run review:questions --workspace server -- --type multiple_choice --threshold 0.88 --limit 80
+
+# Importar preguntas desde markdown: primero dry-run, despues apply
+npm run import:md --workspace server -- ../Cuestionario_Unidad_5_Redes.md ../Cuestionario_Unidad_4_Corregido.md ../Cuestionario_Unidad_6_Corregido.md
+npm run import:md --workspace server -- --apply ../Cuestionario_Unidad_5_Redes.md ../Cuestionario_Unidad_4_Corregido.md ../Cuestionario_Unidad_6_Corregido.md
+
+# Borrar duplicadas exactas via API: primero dry-run, despues apply
+npm run dedupe:exact --workspace server -- --type multiple_choice
+npm run dedupe:exact --workspace server -- --type multiple_choice --apply
+```
+
+Si la conexion directa a Postgres desde tu maquina falla por timeout, usa la API desplegada para bajar un snapshot y revisarlo localmente:
+
+```bash
+curl -s https://for-io-server.vercel.app/api/questions > prod-questions.json
+npm run review:questions --workspace server -- --file ../prod-questions.json --type multiple_choice --threshold 0.88 --limit 80
+```
+
+Reglas de seguridad:
+
+- No commitear `.env`, URLs de Postgres, passwords ni tokens.
+- No pegar credenciales reales en README, issues o commits.
+- Si una credencial se comparte por error, rotarla en Neon/Vercel.
+- Antes de borrar datos en produccion, correr siempre el dry-run y guardar backup. El script `dedupe:exact --apply` genera un backup local en `server/data/backups/`.
+
 ## Scripts utiles
 
 ```bash

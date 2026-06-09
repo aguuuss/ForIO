@@ -274,8 +274,14 @@ async function readQuestionsFromDatabase() {
   });
 
   try {
+    console.error("Leyendo preguntas desde DATABASE_URL...");
     const result = await db.query("SELECT value FROM app_state WHERE key = $1", [APP_STATE_KEY]);
-    return result.rows[0]?.value ?? [];
+    const questions = result.rows[0]?.value ?? [];
+    if (!Array.isArray(questions)) {
+      throw new Error(`app_state.value no es un array. Tipo recibido: ${typeof questions}`);
+    }
+    console.error(`DB ok: ${questions.length} preguntas leidas.`);
+    return questions;
   } finally {
     await db.end();
   }
@@ -325,6 +331,19 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error(error instanceof Error ? error.message : error);
+  if (error instanceof Error) {
+    console.error("Error:", error.message || "(sin mensaje)");
+    if ("code" in error) {
+      console.error("Code:", error.code);
+    }
+    if ("cause" in error && error.cause) {
+      console.error("Cause:", error.cause);
+    }
+    if (error.stack) {
+      console.error(error.stack);
+    }
+  } else {
+    console.error("Error:", error);
+  }
   process.exit(1);
 });
